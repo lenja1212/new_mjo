@@ -121,18 +121,22 @@ bdate_end=$year-12-31
 y_shift=$(($yearp-1992))year
 
 
-# echo "date:           "$year" "$month" "$day
-# echo "bdate_start: " $bdate_start " bdate_end: " $bdate_end
-# dt_120=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 117 day")
-# echo $dt_120 
-# bdstart1=${dt_120:0:4}
-# year3=${dt_120:0:4}
-# month3=${dt_120:4:2}
-# day3=${dt_120:6:2}
-# hour3=${dt_120:9:2}
-# echo "bdstart1: " $bdstart1
-# echo "date2:           "$year3" "$month3" "$day3
-# exit 0
+echo "date:           "$year" "$month" "$day
+echo "bdate_start: " $bdate_start " bdate_end: " $bdate_end
+dt_120=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 117 day")
+echo $dt_120 
+bdstart1=${dt_120:0:4}
+year3=${dt_120:0:4}
+month3=${dt_120:4:2}
+day3=${dt_120:6:2}
+hour3=${dt_120:9:2}
+echo "bdstart1: " $bdstart1
+echo "date2:           "$year3" "$month3" "$day3
+bdstart11=${dt_120:0:4}"-"${dt_120:4:2}"-"${dt_120:6:2}
+echo "bdstart11: " $bdstart11
+dt_120_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 2 day")
+echo $dt_120_end 
+exit 0
 
 for dir in $dir_out $dir_out_era5 $dir_out_slav $dir_out_py $dir_temp; do
   if [ ! -d $dir ]; then

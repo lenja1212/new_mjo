@@ -36,11 +36,11 @@ vars=[ "olr", "u850hpa", "u200hpa" ]
 
 
 config = {
-  "date":  "2007123000", #2014123000 2014022800
+  "date":  "2014123000",
   "dirin": "",
-  "dirout": "/home/leonid/Desktop/MSU/mj0-rmm",
+  "dirout": "",
   "direra5": "",
-  "slav": { #
+  "slav": {
     "pattern": "erfclim-<var>-<year><month><day><hour>-<member>.nc"
   },
   "era5": {
@@ -50,7 +50,6 @@ config = {
   },
   "txt_out":  False
 }
-
 #==================================
 
 inp_conf = {}
@@ -136,10 +135,9 @@ for h in range(24):
             s = s.replace("<hour>"  , str(hour))
             s = s.replace("<var>"   , str(var))
             s = s.replace("<member>", str(member))
-            # ncfile[dt][var] = config[dt]["dir"] + "/" + dv + "/" + str(s) #Good for script
-            #ncfile[dt][var] = "/home/leonid/mjo/mjoindices/tests/testdata/plav" + "/" + dv + "/" + str(s) #rname to slav
+            
             ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/slav" + "/" + dv + "/" + str(s) # GOOD script and py
-          
+
             if (os.path.isfile(ncfile[dt][var])):  
               # print (dt + " file found: " + ncfile[dt][var])
               f = netcdf4.Dataset(ncfile[dt][var], "r")
@@ -209,6 +207,7 @@ pcs_txt_file_all_memb = config["dirout"] + "/mjo-rmm_all_members" + config["year
 with open(f'{pcs_txt_file_all_memb}.txt','w') as file: #Save all_members_dfs into file as dataframe  
     for dframe in all_members_dfs :
         dframe.to_csv(file, index=False, header=False)
+
 psc_png_file_all_memb = config["dirout"] + "/mjo-rmm_all_members" + config["year"] #Place and name to store all members' graphic
 drawAllPc(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_all_memb}', member_counter)
 ###***Updated 31.07.2023***### 
