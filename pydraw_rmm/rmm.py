@@ -136,7 +136,7 @@ for h in range(24):
             s = s.replace("<var>"   , str(var))
             s = s.replace("<member>", str(member))
             
-            ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/slav" + "/" + dv + "/" + str(s) # GOOD script and py
+            ncfile[dt][var] = config[dt]["dir"] + "/" + dv + "/" + str(s) #Good for script
 
             if (os.path.isfile(ncfile[dt][var])):  
               # print (dt + " file found: " + ncfile[dt][var])
