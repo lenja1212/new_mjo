@@ -158,8 +158,7 @@ def drawPc(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1): #
     for i in range(1,len(text31)):
         plt.annotate(text31[i], (rotated_data[:,0][i], rotated_data[:,1][i] + 0.2), fontsize=5)
     plt.legend()
-
-    print("coordinate of the las point:", jan_arr_pc1[-1], jan_arr_pc2[-1])
+    # print("coordinate of the last point:", jan_arr_pc1[-1], jan_arr_pc2[-1])
 # Add Circle
     circle1 = plt.Circle((0, 0), 1, color='k', fill=False, linewidth=1)
     ax.plot([0, 1], [0, 1], transform=ax.transAxes, color='k', linewidth = 0.5, ls="--" )
@@ -181,7 +180,6 @@ def drawPc(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1): #
 def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL participants of the ensemble
     print("drawAllPc")
     print("path pc: ", pc_text_file)
-    print("path graph: ", pc_png_file)
     pc1_all_memb, pc2_all_memb = getMembersPc(pc_text_file, members_number)
     memb_to_draw = len(pc1_all_memb) - 1 # memb_to_draw; do not draw the last element - it's era
 # Prepare figure fields
@@ -271,6 +269,7 @@ def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL parti
     saveFig(pc_png_file)
 
 def drawCor(pc_text_file: Path, pc_png_file: Path, members_number):
+    print("drawCor")
     print("path pc: ", pc_text_file)
     pc1_all_memb, pc2_all_memb = getMembersPc(pc_text_file, members_number)
     memb_to_draw = len(pc1_all_memb) - 1 # memb_to_draw; do not draw the last element - it's era
@@ -284,6 +283,7 @@ def drawCor(pc_text_file: Path, pc_png_file: Path, members_number):
 
 
 def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number):
+    print("drawRmse")
     print("path pc: ", pc_text_file)
     pc1_all_memb, pc2_all_memb = getMembersPc(pc_text_file, members_number)
     memb_to_draw = len(pc1_all_memb) - 1 # memb_to_draw; do not draw the last element - it's era
@@ -297,6 +297,7 @@ def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number):
 
 
 def drawMsss(pc_text_file: Path, pc_png_file: Path, members_number): 
+    print("drawMsss")
     print("path pc: ", pc_text_file)
     pc1_all_memb, pc2_all_memb = getMembersPc(pc_text_file, members_number)
     memb_to_draw = len(pc1_all_memb) - 1 # memb_to_draw; do not draw the last element - it's era

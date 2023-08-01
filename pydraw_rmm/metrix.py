@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 
 def findCor(pc1_all_memb, pc2_all_memb, memb_to_draw): ### W:  
-	print("findCor")
+	# print("findCor")
 	corr = []
 	pc_days = len(pc1_all_memb[0])
 	for i in range(0, pc_days):
@@ -16,7 +16,7 @@ def findCor(pc1_all_memb, pc2_all_memb, memb_to_draw): ### W:
 	return corr
 
 def findRmse(pc1_all_memb, pc2_all_memb, memb_to_draw): #
-	print("findRmse")
+	# print("findRmse")
 	rmse = []
 	pc_days = len(pc1_all_memb[0])
 	for i in range(0, pc_days): 
@@ -29,7 +29,7 @@ def findRmse(pc1_all_memb, pc2_all_memb, memb_to_draw): #
 	return rmse
 
 def findMsss(pc1_all_memb, pc2_all_memb, memb_to_draw):
-	print("findMsss")
+	# print("findMsss")
 	msss = []
 	mse_c = []
 	pc_days = len(pc1_all_memb[0])

@@ -175,8 +175,8 @@ for h in range(24):
         # variance_u850_all = np.std(df_u850_all)
         #********************************************#
 
-        print("variance_olr: ",variance_olr, " variance_u200: ", variance_u200, " variance_u850: ", variance_u850, "\n")
-        print("variance_olr_all: ",variance_olr_all, " variance_u200_all: ", variance_u200_all, " variance_u850_all: ", variance_u850_all, "\n")
+        # print("variance_olr: ",variance_olr, " variance_u200: ", variance_u200, " variance_u850: ", variance_u850, "\n")
+        # print("variance_olr_all: ",variance_olr_all, " variance_u200_all: ", variance_u200_all, " variance_u850_all: ", variance_u850_all, "\n")
         
         dt = "era5"
         solver = MultivariateEof([data[dt]["olr"]/variance_olr_all, data[dt]["u850hpa"]/variance_u850_all, data[dt]["u200hpa"]/variance_u200_all], center=True)
