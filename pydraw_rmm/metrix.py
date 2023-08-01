@@ -13,7 +13,6 @@ def findCor(pc1_all_memb, pc2_all_memb, memb_to_draw): ### W:
 		denom_1 = np.sqrt( memb_to_draw * np.power(pc1_all_memb[-1][i], 2)  + memb_to_draw * np.power(pc2_all_memb[-1][i], 2) )  
 		denom_2 = np.sqrt( np.sum(np.power(dayly_pc1, 2)) + np.sum(np.power(dayly_pc2, 2)) )
 		corr.append( (numenator_pc1 + numenator_pc2) / (denom_1 * denom_2) )
-
 	return corr
 
 def findRmse(pc1_all_memb, pc2_all_memb, memb_to_draw): #
@@ -27,8 +26,6 @@ def findRmse(pc1_all_memb, pc2_all_memb, memb_to_draw): #
 		numenator_1 = np.sum( np.power(delta_1, 2 ) ) 
 		numenator_2 = np.sum( np.power(delta_2, 2 ) ) 
 		rmse.append( np.sqrt( (numenator_1 + numenator_2) / memb_to_draw) )
-		print("rmse[",i,"]: ",rmse[i])
-	print()
 	return rmse
 
 def findMsss(pc1_all_memb, pc2_all_memb, memb_to_draw):
@@ -41,14 +38,7 @@ def findMsss(pc1_all_memb, pc2_all_memb, memb_to_draw):
 	for i in range(0, pc_days): # days in pc
 		mse_c_numen = memb_to_draw * ( np.power(pc1_all_memb[-1][i], 2)  + np.power(pc2_all_memb[-1][i], 2) )
 		mse_c.append(mse_c_numen / memb_to_draw) 
-	print("mse_f: ", mse_f)
-	print("mse_c: ", mse_c)
-	print("mse_f/mse_: ", mse_f/mse_c)
-
 	msss = 1 - mse_f / mse_c
-	for i in range(0, pc_days): # days in pc
-		print("msss[",i,"]: ",msss[i])
-	# exit()
 	return msss
 
 def getMaxMinMedMemb(pc1_all_memb, pc2_all_memb, memb_to_draw): #!!!
@@ -82,31 +72,3 @@ def getDaylyPc(pc1_all_memb, pc2_all_memb, memb_to_draw, day):
 		dayly_pc2.append(pc2_all_memb[j][day])
 	return dayly_pc1, dayly_pc2
 
-
-
-	# for i in range(0, pc_days):
-	# 	dayly_pc1, dayly_pc2 = getDaylyPc(pc1_all_memb, pc2_all_memb, memb_to_draw, i)
-	# 	print("dayly_pc1: ", dayly_pc1)
-	# 	print("dayly_pc2: ", dayly_pc2)
-	# 	print("pc1_all_memb[-1][i]: ", pc1_all_memb[-1][i])
-	# 	print("pc2_all_memb[-1][i]: ", pc2_all_memb[-1][i])
-	# 	print("np.sum(dayly_pc1): ", np.sum(dayly_pc1))
-	# 	print("np.sum(dayly_pc2): ", np.sum(dayly_pc2))
-	# 	numenator_pc1 = pc1_all_memb[-1][i] * np.sum(dayly_pc1) #a1 * b1
-	# 	numenator_pc2 = pc2_all_memb[-1][i] * np.sum(dayly_pc2) #a2 * b2
-	# 	print("numenator_pc1: ",numenator_pc1)
-	# 	print("numenator_pc2: ",numenator_pc2)
-	# 	print()
-	# 	print("np.power(pc1_all_memb[-1][i], 2): ", np.power(pc1_all_memb[-1][i], 2))
-	# 	print("np.power(pc2_all_memb[-1][i], 2): ", np.power(pc2_all_memb[-1][i], 2))
-	# 	denom_1 = np.sqrt( memb_to_draw * np.power(pc1_all_memb[-1][i], 2)  + memb_to_draw * np.power(pc2_all_memb[-1][i], 2) )  
-	# 	denom_2 = np.sqrt( np.sum(np.power(dayly_pc1, 2)) + np.sum(np.power(dayly_pc2, 2)) )
-	# 	print("denom_1: ",denom_1)
-	# 	print("denom_2: ",denom_2)
-	# 	print("numenator: ", (numenator_pc1 + numenator_pc2) )
-	# 	print("denom: ", (denom_1 * denom_2))
-	# 	corr.append( (numenator_pc1 + numenator_pc2) / (denom_1 * denom_2) )
-	# 	print("corr[",i,"]: ",corr[i])
-	# 	print()
-	# 	print()
-	# return corr

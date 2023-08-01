@@ -20,7 +20,7 @@ from nc_fig_paths import *
 from eofs.multivariate.standard import MultivariateEof
 from eofs.standard import Eof
 
-start_time = time_p.time()
+# start_time = time_p.time() # process time 
 # normalization factors from WMO letter 
 variance_olr  =  15.1
 variance_u200 =  4.81 
@@ -36,7 +36,7 @@ vars=[ "olr", "u850hpa", "u200hpa" ]
 
 
 config = {
-  "date":  "2014123000", #2014123000 2014022800
+  "date":  "2007123000", #2014123000 2014022800
   "dirin": "",
   "dirout": "/home/leonid/Desktop/MSU/mj0-rmm",
   "direra5": "",
@@ -97,7 +97,7 @@ print("RMM \n")
 for h in range(24):
     # if h == 1:
       # break
-    for m in range(100):#100 to get  #1 test 
+    for m in range(100):
         # if m == 1:
           # break
         hour = str(h)
@@ -141,29 +141,20 @@ for h in range(24):
             ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/slav" + "/" + dv + "/" + str(s) # GOOD script and py
           
             if (os.path.isfile(ncfile[dt][var])):  
-              print (dt + " file found: " + ncfile[dt][var])
+              # print (dt + " file found: " + ncfile[dt][var])
               f = netcdf4.Dataset(ncfile[dt][var], "r")
               for v in config["era5"]["vars"]:
                 if v in f.variables:
-                  print("v1:", v)
-                  print("dv:", dv)
-                  print("dt:", dt)
-                  print("var:", var)
                   data[dt][var] = np.array(f.variables[v])
-                  print("data[dt][var]:", np.array(data[dt][var]).shape)
                   scc = scc+1
                   break
-                
-                # print(var + " len " + ":", (data[dt][var].shape))
             else:
               # print ("file NOT found for \n dt: " + dt + " \n var: " + var + " \n file: " + ncfile[dt][var])
-              # print("not found: ", ncfile[dt][var])
               scc = -1
               break
               exit()
           if scc == -1:
             break
-        print("scc: ", scc, " == ", 2*len(vars))
         if not scc == 2*len(vars):
           # print ("no data found!")
           continue
@@ -173,6 +164,7 @@ for h in range(24):
         pc_name = config["dirout"] + "/mjo-rmm_" + config["year"] + config["month"] + config["day"] + str(hour) + "-" + str(member)
         pcstxtfile = pc_name
         psc_png_file = pc_name
+
         #****** Calculate normalization factor  *******#
         # variance_olr = np.std(df_sst_olr)
         # variance_u200 = np.std(df_sst_u200)
@@ -187,33 +179,13 @@ for h in range(24):
         print("variance_olr_all: ",variance_olr_all, " variance_u200_all: ", variance_u200_all, " variance_u850_all: ", variance_u850_all, "\n")
         
         dt = "era5"
-        # arr = np.array([-1*data[dt]["olr"]/variance_olr, data[dt]["u850"]/variance_u850, data[dt]["u200"]/variance_u200])
-        arr = np.array([-1*data[dt]["olr"]/variance_olr, data[dt]["u850hpa"]/variance_u850, data[dt]["u200hpa"]/variance_u200])
-        print(dt, "zero0: ",data[dt]["olr"][0])
-        print("Shape: ", arr.shape)
-        # solver = MultivariateEof([data[dt]["olr"]/variance_olr_all, data[dt]["u850"]/variance_u850_all, data[dt]["u200"]/variance_u200_all], center=True)
         solver = MultivariateEof([data[dt]["olr"]/variance_olr_all, data[dt]["u850hpa"]/variance_u850_all, data[dt]["u200hpa"]/variance_u200_all], center=True)
 
         # ##### !!! for WH04 _setEofWH04 in both standard.py
         eof1_list = solver.eofs(neofs=2, eofscaling=0)  #Mandatory step for correct projection on WH04 eofs
-        # file = open('eofs.txt','w')
-        # for item in eof1_list:
-        #     file.write(f'{item} \n')
-        # file.close()
-        # # exit()
-        # print(np.array(eof1_list[0]).shape)
-
         ######################################################
-
-        print("flag1 ")
         #******  Find PC  ******#  -1 if initial olr data are negative; 1 if olr data are positive
         dt = "slav"
-        # arr = np.array([-1*data[dt]["olr"]/variance_olr, data[dt]["u850"]/variance_u850, data[dt]["u200"]/variance_u200])
-        arr = np.array([-1*data[dt]["olr"]/variance_olr, data[dt]["u850hpa"]/variance_u850, data[dt]["u200hpa"]/variance_u200])
-        print(dt, "zero1: ",data[dt]["olr"][0])
-        # arr = np.array(data[dt]["olr"])
-        print("Shape: ", arr.shape)
-        # pseudo_pcs = np.squeeze(solver.projectField([-1*data[dt]["olr"]/variance_olr, data[dt]["u850"]/variance_u850, data[dt]["u200"]/variance_u200], eofscaling=1, neofs=2, weighted=False)) # same as neofs=2
         pseudo_pcs = np.squeeze(solver.projectField([-1*data[dt]["olr"]/variance_olr, data[dt]["u850hpa"]/variance_u850, data[dt]["u200hpa"]/variance_u200], eofscaling=1, neofs=2, weighted=False)) # same as neofs=2
 
         psc1, psc2 = [], []
@@ -222,28 +194,17 @@ for h in range(24):
             psc2.append(pc[1]) 
 
         df = pd.DataFrame({"PC1": psc1, "PC2": psc2})
-        print(pc_name)
-        print(pcstxtfile)
         df.to_csv(f'{pcstxtfile}.txt', index=False, float_format="%.5f")
         all_members_dfs.append(df.head(31)) # The first 31 days of PCs #Updated 10.07.2023
-
-        print("psc_png_file: ", psc_png_file)
-         #******  Dwar graphs  ******#
+        #******  Dwar graphs  ******#
         if True:
           drawPc(f'{pcstxtfile}.txt', psc_png_file) # The last two argument are 1 by ddefault
         else:
           drawPc_OLD(f'{pcstxtfile}.txt', psc_png_file) #The last two argument are 1 by ddefault
         # #****************************#
-        print("all_members_dfs len:", len(all_members_dfs))
-        print("member_counter:", member_counter)
         #print("--- %s seconds totally ---" % (time_p.time() - start_time))
+f.close() 
 
-
-# f.close() 
-
-
-
-print("Flag2")
 pcs_txt_file_all_memb = config["dirout"] + "/mjo-rmm_all_members" + config["year"]
 with open(f'{pcs_txt_file_all_memb}.txt','w') as file: #Save all_members_dfs into file as dataframe  
     for dframe in all_members_dfs :
@@ -251,15 +212,14 @@ with open(f'{pcs_txt_file_all_memb}.txt','w') as file: #Save all_members_dfs int
 psc_png_file_all_memb = config["dirout"] + "/mjo-rmm_all_members" + config["year"] #Place and name to store all members' graphic
 drawAllPc(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_all_memb}', member_counter)
 ###***Updated 31.07.2023***### 
-# psc_png_file_cor = config["dirout"] + "/mjo-rmm_cor" + config["year"] 
-# drawCor(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_cor}', member_counter)
-# exit()
-# psc_png_file_rmse = config["dirout"] + "/mjo-rmm_rmse" + config["year"] 
-# drawRmse(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_rmse}', member_counter)
-# exit()
+psc_png_file_cor = config["dirout"] + "/mjo-rmm_cor" + config["year"] 
+drawCor(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_cor}', member_counter)
+
+psc_png_file_rmse = config["dirout"] + "/mjo-rmm_rmse" + config["year"] 
+drawRmse(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_rmse}', member_counter)
+
 psc_png_file_msss = config["dirout"] + "/mjo-rmm_msss" + config["year"] 
 drawMsss(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_msss}', member_counter)
-exit()
 ##############################
 
 print("Done")

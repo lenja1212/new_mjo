@@ -7,7 +7,7 @@
 #   dir out
 
 # simulate_slav_by_era5=true
-simulate_slav_by_era5=true # TODO check this data paths and draws for 1993 02 28 23 d: true
+simulate_slav_by_era5=false # TODO check this data paths and draws for 1993 02 28 23 d: true
 
 parse_era5=true
 parse_slav=true
@@ -235,8 +235,8 @@ if $parse_slav; then
 
         fnin=${fnin_slav_pattern//"<var>"/$var} 
         fnin=${fnin//"<ensmember>"/$member}
-        fnin=$dir_slav/$var/${fnin//"<date>"/$date_forecast} #GOOD for era5
-        # fnin=$dir_slav/${fnin//"<date>"/$date_forecast} #GOOD for erfclim
+        # fnin=$dir_slav/$var/${fnin//"<date>"/$date_forecast} #GOOD for era5
+        fnin=$dir_slav/${fnin//"<date>"/$date_forecast} #GOOD for erfclim
         
         if [ ! -e $fnin ]; then
           echo "no sych file" $fnin
@@ -255,11 +255,11 @@ if $parse_slav; then
           cdo shifttime,$y_shift  $fntmp_1  $fntmp_s
           cdo seldate,$date_start,$date_end  $fntmp_s  $fntmp_ftyclim
           cdo -settaxis,$bdate_start,12:00:00,1day -seldate,$bdate_start,$bdate_end  $fnera5  $fntmp_01
-          # if true; then # SLAV data
-          #   echo "SLAV"
-          #   cdo -settaxis,$date_start,12:00:00,1day  $fntmp_ftyclim  $fntmp_001
+          if true; then # SLAV data
+            echo "SLAV"
+            cdo -settaxis,$date_start,12:00:00,1day  $fntmp_ftyclim  $fntmp_001
           # else # era5 data
-            cdo -settaxis,$date_start,12:00:00,1day -seldate,$date_start,$date_end  $fnera5  $fntmp_001
+            # cdo -settaxis,$date_start,12:00:00,1day -seldate,$date_start,$date_end  $fnera5  $fntmp_001
           fi
           cdo -O mergetime   $fntmp_01  $fntmp_001  $fntmp_merged
           echo $fntmp_merged
@@ -311,7 +311,7 @@ if $parse_py; then
     cd pydraw_rmm
     echo `pwd`
     echo $year$month$day$hour $dir_out_slav $dir_era5 $dir_out_py
-    # python3 ./rmm.py date=$year$month$day$hour dirin=$dir_out_slav  direra5=$dir_era5  dirout=$dir_out_py # Good
+    python3 ./rmm.py date=$year$month$day$hour dirin=$dir_out_slav  direra5=$dir_era5  dirout=$dir_out_py # Good
 
     # simulate_slav_by_era5
     cd ..

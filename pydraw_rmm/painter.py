@@ -103,7 +103,7 @@ def drawPc_OLD(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1
         plt.annotate(text31[i], (rotated_data[:,0][i], rotated_data[:,1][i] + 0.2), fontsize=5)
     plt.annotate("FINISH", (mar_arr_pc1[-1], mar_arr_pc2[-1] + 0.2), fontsize=8)
     plt.legend()
-    print("coordinate of the las point:", mar_arr_pc1[-1], mar_arr_pc2[-1])
+    # print("coordinate of the las point:", mar_arr_pc1[-1], mar_arr_pc2[-1])
 #add Circle
     circle1 = plt.Circle((0, 0), 1, color='k', fill=False, linewidth=1)
     ax.plot([0, 1], [0, 1], transform=ax.transAxes, color='k', linewidth = 0.5, ls="--" )
@@ -212,7 +212,6 @@ def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL parti
 
 # Draw all, but one members 
     for i in range(1, memb_to_draw):
-        print("draw all: ", i)
         jan_arr_pc1 = pc1_all_memb[i]
         jan_arr_pc2 = pc2_all_memb[i]
     #Fill area between all members
@@ -269,17 +268,10 @@ def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL parti
         plt.annotate(text31[i], (pc1_mean_arr[i], pc2_mean_arr[i] + 0.1), fontsize=5)
     plt.legend( loc = "upper right") # No legend shift 
 # Save into the file
-    is_exist = os.path.exists(pc_png_file)
-    if not is_exist:
-        os.makedirs(pc_png_file)
-    fig_name = os.path.basename(pc_png_file)
-    plt.savefig(f'{pc_png_file}/{fig_name}.png')
-    plt.close()
-    print("Graph saved: ", f'{pc_png_file}/{fig_name}.png')
+    saveFig(pc_png_file)
 
 def drawCor(pc_text_file: Path, pc_png_file: Path, members_number):
     print("path pc: ", pc_text_file)
-    print("path graph: ", pc_png_file)
     pc1_all_memb, pc2_all_memb = getMembersPc(pc_text_file, members_number)
     memb_to_draw = len(pc1_all_memb) - 1 # memb_to_draw; do not draw the last element - it's era
     corr = findCor(pc1_all_memb, pc2_all_memb, memb_to_draw)
@@ -288,13 +280,11 @@ def drawCor(pc_text_file: Path, pc_png_file: Path, members_number):
     plt.xlabel('days')
     plt.ylabel('Correlation')
     plt.plot(np.arange(len(pc1_all_memb[0])), corr, marker='.', color='blue', ms=2.5, linewidth=1.2)
-    plt.show()
     saveFig(pc_png_file)
 
 
 def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number):
     print("path pc: ", pc_text_file)
-    print("path graph: ", pc_png_file)
     pc1_all_memb, pc2_all_memb = getMembersPc(pc_text_file, members_number)
     memb_to_draw = len(pc1_all_memb) - 1 # memb_to_draw; do not draw the last element - it's era
     rmse = findRmse(pc1_all_memb, pc2_all_memb, memb_to_draw)
@@ -303,13 +293,11 @@ def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number):
     plt.xlabel('days')
     plt.ylabel('RMSE')
     plt.plot(np.arange(len(pc1_all_memb[0])), rmse, marker='.', color='black', ms=2.5, label='jan', linewidth=1.2)
-    plt.show()
     saveFig(pc_png_file)
 
 
 def drawMsss(pc_text_file: Path, pc_png_file: Path, members_number): 
     print("path pc: ", pc_text_file)
-    print("path graph: ", pc_png_file)
     pc1_all_memb, pc2_all_memb = getMembersPc(pc_text_file, members_number)
     memb_to_draw = len(pc1_all_memb) - 1 # memb_to_draw; do not draw the last element - it's era
     msss = findMsss(pc1_all_memb, pc2_all_memb, memb_to_draw)
@@ -318,15 +306,17 @@ def drawMsss(pc_text_file: Path, pc_png_file: Path, members_number):
     plt.xlabel('days')
     plt.ylabel('MSSS')
     plt.plot(np.arange(len(pc1_all_memb[0])), msss, marker='.', color='black', ms=2.5, label='jan', linewidth=1.2)
-    plt.show()
     saveFig(pc_png_file)
 
-def saveFig(pc_png_file)
+def saveFig(pc_png_file):
+    print("path graph: ", pc_png_file)
     exists = os.path.exists(pc_png_file)
     if not exists:
        os.makedirs(pc_png_file)
     fig_name = os.path.basename(pc_png_file)
     plt.savefig(f'{pc_png_file}/{fig_name}.png')
+    plt.close()
+    print("Graph saved: ", f'{pc_png_file}/{fig_name}.png')
 
 
 
