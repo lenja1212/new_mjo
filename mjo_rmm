@@ -1,0 +1,332 @@
+#!/bin/bash
+
+# input:
+#   2014123000
+    # 1993 02 28 23
+#   dir in (slav)
+#   dir out
+
+# simulate_slav_by_era5=true
+simulate_slav_by_era5=true # TODO check this data paths and draws for 1993 02 28 23 d: true
+
+parse_era5=true
+parse_slav=true
+parse_py=true
+
+vars="olr u850hpa u200hpa"
+hours="00 06 12 18"
+
+#dir_out="/RHM-Lustre3.2/users/wg-slmod/rfadeev/NWPlab/stuff/mjo-rmm/out"
+dir_slav="/home/leonid/mjo/mjoindices/tests/testdata/plav/"
+dir_out="/home/leonid/Desktop/MSU/mj0-rmm/era5/"
+
+dir_temp="./temp"
+ncext=".nc"
+
+#dir_era5="/RHM-Lustre3.2/users/wg-slmod/rfadeev/NWPlab/stuff/mjo-rmm/era5-1979-2022"
+dir_era5="/home/leonid/Desktop/MSU/mj0-rmm"
+fn_era5_pattern="era5-<var>-day-2p5grid-all.nc"
+suffix_timemean="tm"
+suffix_timemean_lpf="tmlpf"
+
+fntmp1=$dir_temp"/ztemp"${RANDOM}${RANDOM}$ncext
+fntmp2=$dir_temp"/ztemp"${RANDOM}${RANDOM}$ncext
+fntmp_s1=$dir_temp"/ztemp"${RANDOM}${RANDOM}$ncext
+fntmp001=$dir_temp"/ztemp"${RANDOM}${RANDOM}$ncext
+fntmp01=$dir_temp"/ztemp"${RANDOM}${RANDOM}$ncext
+
+# if ! $simulate_slav_by_era5; then
+#   fnin_slav_sim_era_pattern="erfclim.<date>_<ensmember>-<var>.nc"
+#   fnout_slav_pattern="erfclim.<date>_<ensmember>-<var>_mjormm.nc" #???
+# else
+fnin_slav_sim_era_pattern="erfclim.era5.<date>_<ensmember>-<var>.nc"
+fnin_slav_pattern="erfclim.<date>_<ensmember>-<var>.nc"
+#fnout_slav_pattern="erfclim.era5.<date>_<ensmember>-<var>_mjormm.nc" #???
+# fi
+
+# ##Test
+# slav_n_era_in=($fnin_slav_sim_era_pattern $fnin_slav_pattern)
+# for i in ${slav_n_era_in[@]}; do
+#   echo "i: " $i
+# done
+# # exit 0
+# ##
+
+if [ ! $# -eq 3 ]; then
+  echo "wrong number of input arguments!"
+  exit
+fi
+
+sdate=$1
+dir_slav=$2
+dir_out=$3
+
+dir_out_era5=${dir_out}"/era5"
+dir_out_slav=${dir_out}"/slav"
+dir_out_py=${dir_out}"/mjo-rmm"
+
+fntmp_list=""
+
+echo
+echo "Input slav dir: "$dir_slav
+echo "Input era5 dir: "$dir_era5
+echo "Output dir:     "$dir_out
+#======================================
+
+function get_dates() {
+  if [ $# -le 0 ]; then echo "Error: argument missed in get_dates"; exit; fi;
+  if [ $# -ge 2 ]; then echo "Error: too many arguments in get_dates"; exit; fi;
+  year=${1:0:4}
+  month=${1:4:2}
+  day=${1:6:2}
+  hour=${1:8:2}
+}
+
+function check_if_files_exist() {
+  if [ $# -eq 0 ]; then echo "Error: argument missed in check_if_files_exist"; exit; fi;
+  for fn in $1; do
+    if [ ! -e $fn ]; then
+      echo "file not found: "$fn
+    fi
+  done
+}
+
+function gen_fntmp()
+{
+  while [ $# -gt 0 ]; do
+    local  __resultvar=$1
+    local  fn=$dir_temp"/temp"${RANDOM}${RANDOM}$ncext
+    fntmp_list=$fntmp_list" "$fn
+    if [[ "$__resultvar" ]]; then
+        eval $__resultvar="'$fn'"
+    else
+        echo "$fn"
+    fi
+    shift
+  done
+}
+#======================================
+
+gen_fntmp fntmp_15 fntmp_1 fntmp_s fntmp_ftyclim fntmp_001 fntmp_01 fntmp_merged fntmp_merged_ax fntmp_merged_sub_tm fnera5tmlpf fntmp_merged_sub_tmclim1
+gen_fntmp fntmp_merged_sub_tmclim_runm fntmp_sub_ftcl_subr fntmp_ydaymean_anom816V13
+get_dates $1 # get year month day
+
+let yearp=$year+1
+let yearm=$year-1
+
+date_start=$yearp-01-01
+date_end=$yearp-03-28 
+bdate_start=$year-09-04
+bdate_end=$year-12-31
+y_shift=$(($yearp-1992))year
+
+
+# echo "date:           "$year" "$month" "$day
+# echo "bdate_start: " $bdate_start " bdate_end: " $bdate_end
+# dt_120=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 117 day")
+# echo $dt_120 
+# bdstart1=${dt_120:0:4}
+# year3=${dt_120:0:4}
+# month3=${dt_120:4:2}
+# day3=${dt_120:6:2}
+# hour3=${dt_120:9:2}
+# echo "bdstart1: " $bdstart1
+# echo "date2:           "$year3" "$month3" "$day3
+# exit 0
+
+for dir in $dir_out $dir_out_era5 $dir_out_slav $dir_out_py $dir_temp; do
+  if [ ! -d $dir ]; then
+    echo "creating: "$dir
+    mkdir -p $dir
+  fi
+done
+
+if $simulate_slav_by_era5; then
+  echo "parsing era5 to simulate slav data"
+  
+  if [ ! -d $dir_slav ]; then
+    echo "creating: "$dir
+    mkdir -p $dir
+  fi
+  
+  for var in $vars; do
+    dir=$dir_slav/$var
+    if [ ! -d $dir ]; then
+      echo "creating: "$dir
+      mkdir -p $dir
+    fi
+  done
+
+  dt=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 121 day")
+  
+  year2=${dt:0:4}
+  month2=${dt:4:2}
+  day2=${dt:6:2}
+  hour2=${dt:9:2}
+  
+  date_forecast=${year:2:2}$month$day$hour
+  member="00"
+
+  dt0=$(date --date="19920101 00:00:00 UTC" +%s)
+  dt3=$(date --date="$year$month$day 00:00:00 UTC" +%s)
+  shift_day=$(( ($dt3-$dt0)/(60*60*24) ))
+  shift_min="630"
+  
+  for var in $vars; do
+    fnin=${dir_era5}/${var}/${fn_era5_pattern//"<var>"/$var}
+    
+    fnout=${fnin_slav_pattern//"<var>"/$var}
+    fnout=${fnout//"<ensmember>"/$member}
+    fnout=$dir_slav/$var/${fnout//"<date>"/$date_forecast}
+    echo "simulate_slav_by_era5 fnout: " $fnout
+    # /home/leonid/mjo/mjoindices/tests/testdata/plav//olr/erfclim.14123000_00-olr.nc
+
+
+    cdo seldate,$year-$month-$day,$year2-$month2-$day2 $fnin $fntmp_15
+    
+    cdo shifttime,-${shift_day}day  $fntmp_15  $fntmp_1
+    cdo shifttime,-${shift_min}min  $fntmp_1  $fnout
+    
+    if [ $var == "olr" ]; then
+      ncrename -v olr,radtt $fnout
+    fi
+  done
+fi
+
+
+if $parse_era5; then
+  for var in $vars ; do
+    echo "parsing era5 $var"
+    # long term mean
+    fnin=${fn_era5_pattern//"<var>"/$var}
+    fnout=${fnin//$ncext/"-"$suffix_timemean$ncext}
+    echo "era fnout" $fnout
+    cdo timmean   -del29feb -seldate,1979-01-01,2001-12-31     ${dir_era5}/${var}/$fnin  ${dir_out_era5}/$fnout
+    cdo sub       -del29feb -seldate,1979-01-01,2015-12-31  ${dir_era5}/${var}/$fnin  ${dir_out_era5}/$fnout  $fntmp1
+    # climatology
+    cdo ydaymean  -del29feb -seldate,1979-01-01,2001-12-31     $fntmp1  $fntmp2
+    cdo setmisstoc,0  $fntmp2  $fntmp1
+    cdo lowpass,3 -del29feb  $fntmp1  ${dir_out_era5}/${fnin//$ncext/"-"$suffix_timemean_lpf$ncext}
+  done
+fi
+
+let nfnoutlist=0
+
+if $parse_slav; then
+  echo "parsing slav data"
+  
+  for hour in $hours
+  do
+    for member in {00..25} #{00..99}
+    do
+      # echo "hour/member: "$hour"/"$member
+      
+      forc_year=$year
+      temp="${forc_year:2:2}" 
+      field_dates="$temp"$month$day"$hour"_$member
+      date_forecast=${year:2:2}$month$day$hour
+      
+      for var in $vars; do
+        fnera5=${fn_era5_pattern//"<var>"/$var}
+
+        fnera5tm=$dir_out_era5/${fnera5//$ncext/"-"$suffix_timemean$ncext}
+        fnera5tmlpf=$dir_out_era5/${fnera5//$ncext/"-"$suffix_timemean_lpf$ncext}
+        fnera5=$dir_era5/$var/$fnera5
+
+        fnin=${fnin_slav_pattern//"<var>"/$var} 
+        fnin=${fnin//"<ensmember>"/$member}
+        fnin=$dir_slav/$var/${fnin//"<date>"/$date_forecast} #GOOD for era5
+        # fnin=$dir_slav/${fnin//"<date>"/$date_forecast} #GOOD for erfclim
+        
+        if [ ! -e $fnin ]; then
+          echo "no sych file" $fnin
+          break
+        else
+          echo "file erfclim found" $fnin
+          
+          #    ./ncfiles2015/erfclim-olr-anom816V13-merm-$year-$hour-$member.nc    
+          #fnout=$dir_out_slav/erfclim-$var-anom816V13-merm-$year-$hour-$member.nc
+          fnout=$dir_out_slav/erfclim-$var-$year$month$day$hour-$member.nc
+          
+          check_if_files_exist  $fnera5  $fnin $fntmp_15
+
+          cdo -remapycon,$fnera5  $fnin  $fntmp_15
+          cdo shifttime,0day $fntmp_15   $fntmp_1
+          cdo shifttime,$y_shift  $fntmp_1  $fntmp_s
+          cdo seldate,$date_start,$date_end  $fntmp_s  $fntmp_ftyclim
+          cdo -settaxis,$bdate_start,12:00:00,1day -seldate,$bdate_start,$bdate_end  $fnera5  $fntmp_01
+          # if true; then # SLAV data
+          #   echo "SLAV"
+          #   cdo -settaxis,$date_start,12:00:00,1day  $fntmp_ftyclim  $fntmp_001
+          # else # era5 data
+            cdo -settaxis,$date_start,12:00:00,1day -seldate,$date_start,$date_end  $fnera5  $fntmp_001
+          fi
+          cdo -O mergetime   $fntmp_01  $fntmp_001  $fntmp_merged
+          echo $fntmp_merged
+
+          cdo settaxis,$bdate_start,12:00:00,1day  $fntmp_merged  $fntmp_merged_ax
+          cdo sub  $fntmp_merged_ax  $fnera5tm  $fntmp_merged_sub_tm
+          cdo ydaysub -del29feb  $fntmp_merged_sub_tm  $fnera5tmlpf  $fntmp_merged_sub_tmclim1
+          cdo runmean,120  -seldate,$bdate_start,$date_end  $fntmp_merged_sub_tmclim1  $fntmp_merged_sub_tmclim_runm
+          cdo sub -seldate,$date_start,$date_end  $fntmp_merged_sub_tmclim1  $fntmp_merged_sub_tmclim_runm  $fntmp_sub_ftcl_subr
+          cdo -sellonlatbox,0.0,357.5,-15.0,15.0  -seldate,$date_start,$date_end  $fntmp_sub_ftcl_subr  $fntmp_ydaymean_anom816V13
+          cdo mermean  $fntmp_ydaymean_anom816V13  $fnout
+          echo "parse_slav fnout: " $fnout
+          
+          let nfnoutlist=$nfnoutlist+1
+          echo "nfnoutlist: " $nfnoutlist
+        fi
+      done
+    done 
+  done
+  for var in $vars; do
+    fnera5=${fn_era5_pattern//"<var>"/$var}
+    fnera5tm=$dir_out_era5/${fnera5//$ncext/"-"$suffix_timemean$ncext}
+    fnera5tmlpf=$dir_out_era5/${fnera5//$ncext/"-"$suffix_timemean_lpf$ncext}
+    fnera5=$dir_era5/$var/$fnera5
+    echo "ERA5 " $fnera5
+    echo $bdate_start $bdate_end  $date_start $date_end
+    cdo -settaxis,$bdate_start,12:00:00,1day -seldate,$bdate_start,$bdate_end  $fnera5  $fntmp_01
+    cdo -settaxis,$date_start,12:00:00,1day -seldate,$date_start,$date_end  $fnera5  $fntmp_001
+    cdo -O mergetime   $fntmp_01  $fntmp_001  $fntmp_merged
+    cdo settaxis,$bdate_start,12:00:00,1day  $fntmp_merged  $fntmp_merged_ax
+    cdo sub  $fntmp_merged_ax  $fnera5tm  $fntmp_merged_sub_tm
+    cdo ydaysub -del29feb  $fntmp_merged_sub_tm  $fnera5tmlpf  $fntmp_merged_sub_tmclim1
+    cdo runmean,120  -seldate,$bdate_start,$date_end  $fntmp_merged_sub_tmclim1  $fntmp_merged_sub_tmclim_runm
+    cdo sub -seldate,$date_start,$date_end  $fntmp_merged_sub_tmclim1  $fntmp_merged_sub_tmclim_runm  $fntmp_sub_ftcl_subr
+    cdo -sellonlatbox,0.0,357.5,-15.0,15.0  -seldate,$date_start,$date_end  $fntmp_sub_ftcl_subr  $fntmp_ydaymean_anom816V13
+    hour=18
+    fnout=$dir_out_slav/erfclim-$var-$year$month$day$hour-99.nc
+    cdo mermean  $fntmp_ydaymean_anom816V13  $fnout
+    echo "parse_era fnout: " $fnout
+    
+    let nfnoutlist=$nfnoutlist+1
+    echo "nfnoutlist: " $nfnoutlist
+  done
+fi
+# dir_out_slav=/home/leonid/mjo/mjoindices/tests/testdata/plav/  #tests for
+if $parse_py; then
+  echo "parse py nfnoutlist: " $nfnoutlist
+  #if [ $nfnoutlist -ge 1 ]; then
+    cd pydraw_rmm
+    echo `pwd`
+    echo $year$month$day$hour $dir_out_slav $dir_era5 $dir_out_py
+    # python3 ./rmm.py date=$year$month$day$hour dirin=$dir_out_slav  direra5=$dir_era5  dirout=$dir_out_py # Good
+
+    # simulate_slav_by_era5
+    cd ..
+  #fi
+fi
+
+for fn in $fntmp_list; do
+  if [ -e $fn ]; then
+    echo "remove $fn"
+    rm $fn
+  fi
+done
+
+
+exit
+
+
+

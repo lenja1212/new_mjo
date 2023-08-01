@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if false; then
+  # SLAV input data
+  for year in {1990..2023}; do
+    echo $year"123000"
+    # ./mjo_rmm $year"123000" /RHM-Lustre3.2/users/wg-slmod/rfadeev/NWPlab/stuff/mjo-rmm/slav-erfclim /RHM-Lustre3.2/users/wg-slmod/rfadeev/NWPlab/stuff/mjo-rmm/out
+    ./mjo_rmm $year"123000" /home/leonid/mjo/mjoindices/tests/testdata/plav/ /home/leonid/Desktop/MSU/mj0-rmm/simulate_slav_by_era5
+
+  done
+else
+  # era5 input data
+  for year in {1992..2015}; do
+    echo $year"123000"
+    echo `pwd`
+    ./mjo_rmm $year"123000" /RHM-Lustre3.2/users/wg-slmod/rfadeev/NWPlab/stuff/mjo-rmm/era5-erfclim /RHM-Lustre3.2/users/wg-slmod/rfadeev/NWPlab/stuff/mjo-rmm/out_era5
+    # /home/leonid/Desktop/MSU/mj0-rmm/simulate_slav_by_era5
+  done
+fi
+
+exit
+
