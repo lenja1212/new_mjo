@@ -208,7 +208,7 @@ def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL parti
     plt.plot(pc1_mean_arr, pc2_mean_arr, marker='.', color='black', ms=2.5, linewidth=1.2, label='Mean')
 
 # Draw unpertubed ansamble member - (unshifted member)
-    plt.plot(pc1_all_memb[0], pc2_all_memb[0], marker='.', color='red', ms=2.5, linewidth=1.2, label='Unpertrubed')
+    plt.plot(pc1_all_memb[0], pc2_all_memb[0], marker='.', color='red', ms=2.5, linewidth=1.2, label='Unperturbed')
 # Draw last ansamble member - (controll ERA)
     plt.plot(pc1_all_memb[-1], pc2_all_memb[-1], marker='.', color='blue', ms=2.5, linewidth=1.2, label='Era5')
 
