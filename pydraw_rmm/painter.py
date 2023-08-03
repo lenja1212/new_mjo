@@ -205,7 +205,7 @@ def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL parti
     # ax.plot(elements_pc1_min, elements_pc2_min, marker='.', color='blue', ms=2.5, label='jan', linewidth=1.2)
 
 # Draw middle line
-    plt.plot(pc1_mean_arr, pc2_mean_arr, marker='.', color='black', ms=2.5, linewidth=1.2, label='Middle 50%')
+    plt.plot(pc1_mean_arr, pc2_mean_arr, marker='.', color='black', ms=2.5, linewidth=1.2, label='Mean')
 
 # Draw unpertubed ansamble member - (unshifted member)
     plt.plot(pc1_all_memb[0], pc2_all_memb[0], marker='.', color='red', ms=2.5, linewidth=1.2, label='Unpertrubed')
@@ -286,7 +286,7 @@ def drawCor(pc_text_file: Path, pc_png_file: Path, members_number):
     fig, ax = plt.subplots()
     plt.xlabel('days')
     plt.ylabel('Correlation')
-    plt.plot(np.arange(len(pc1_all_memb[0])), corr, marker='.', color='blue', ms=2.5, linewidth=1.2)
+    plt.plot(np.arange(len(pc1_all_memb[0])), corr, marker='.', color='black', ms=2.5, linewidth=1.2)
     saveFig(pc_png_file)
 
 #===========================================================
