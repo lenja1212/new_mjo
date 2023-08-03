@@ -5,7 +5,7 @@ from matplotlib.collections import LineCollection
 from pathlib import Path
 from metrix import * 
 
-
+#===========================================================
 def getMembersPc(pc_text_file: Path, members_number):
     pc1_all = []
     pc2_all = []
@@ -20,6 +20,7 @@ def getMembersPc(pc_text_file: Path, members_number):
     pc2_all_memb = np.array_split(pc2_all, members_number)
     return pc1_all_memb, pc2_all_memb
 
+#===========================================================
 def rotate_vector(data, angle):
     # make rotation matrix
     # angle = -55
@@ -31,13 +32,14 @@ def rotate_vector(data, angle):
     rotated_vector = data.dot(rotation_matrix)
     return rotated_vector
 
+#===========================================================
 def form_data(arr1, arr2):
   data =[]
   for i in range(len(arr1)):
     data.append([arr1[i], arr2[i]])
   return np.array(data)
 
-
+#===========================================================
 def drawPc_OLD(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1): # 3moths
     pc1 = []
     pc2 = []
@@ -121,14 +123,13 @@ def drawPc_OLD(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1
     plt.savefig(f'{pc_png_file}/{fig_name}_{inverse1}_{inverse2}.png')
     plt.close()
 
-
+#===========================================================
 def drawPc(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1): #only one month
     pc1 = []
     pc2 = []
     days = np.arange(0, 93, 1, dtype=int)
     #  PCs2     PsCs
     print("path pc: ", pc_text_file)
-    print("path graph: ", pc_png_file)
     with open(pc_text_file) as f1:
         next(f1)
         for line in f1:
@@ -174,16 +175,20 @@ def drawPc(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1): #
     #fig_name = os.path.basename(pc_png_file)
     #plt.savefig(f'{pc_png_file}/{fig_name}_{inverse1}_{inverse2}.png')
     
-    plt.savefig(f'{pc_png_file}.png')
+    # plt.savefig(f'{pc_png_file}.png')
+    saveFig(pc_png_file, False)
     plt.close()
 
+#===========================================================
 def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL participants of the ensemble
     print("drawAllPc")
     print("path pc: ", pc_text_file)
+
     pc1_all_memb, pc2_all_memb = getMembersPc(pc_text_file, members_number)
     memb_to_draw = len(pc1_all_memb) - 1 # memb_to_draw; do not draw the last element - it's era
 # Prepare figure fields
     # fig, ax = plt.subplots(layout="constrained")
+    plt.rc('legend', fontsize=9) # legend font size 
     fig, ax = plt.subplots()
     fig.set_figheight(6)
     fig.set_figwidth(6)
@@ -193,7 +198,6 @@ def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL parti
     plt.ylabel('$RMM2$')
     text31 = np.arange(1, 32, 1, dtype=int)
 
-
 # Find 25-75 and middle
     elements_pc1_max, elements_pc2_max, elements_pc1_min, elements_pc2_min, pc1_mean_arr, pc2_mean_arr = getMaxMinMedMemb(pc1_all_memb, pc2_all_memb, memb_to_draw)
 # Draw max/min lines    
@@ -201,15 +205,15 @@ def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL parti
     # ax.plot(elements_pc1_min, elements_pc2_min, marker='.', color='blue', ms=2.5, label='jan', linewidth=1.2)
 
 # Draw middle line
-    plt.plot(pc1_mean_arr, pc2_mean_arr, marker='.', color='black', ms=2.5, label='jan', linewidth=1.2)
+    plt.plot(pc1_mean_arr, pc2_mean_arr, marker='.', color='black', ms=2.5, linewidth=1.2, label='Middle 50%')
 
 # Draw unpertubed ansamble member - (unshifted member)
-    plt.plot(pc1_all_memb[0], pc2_all_memb[0], marker='.', color='red', ms=2.5, linewidth=1.2)
+    plt.plot(pc1_all_memb[0], pc2_all_memb[0], marker='.', color='red', ms=2.5, linewidth=1.2, label='Unpertrubed')
 # Draw last ansamble member - (controll ERA)
-    plt.plot(pc1_all_memb[-1], pc2_all_memb[-1], marker='.', color='blue', ms=2.5, linewidth=1.2)
+    plt.plot(pc1_all_memb[-1], pc2_all_memb[-1], marker='.', color='blue', ms=2.5, linewidth=1.2, label='Era5')
 
 # Draw all, but one members 
-    for i in range(1, memb_to_draw):
+    for i in range(0, memb_to_draw):
         jan_arr_pc1 = pc1_all_memb[i]
         jan_arr_pc2 = pc2_all_memb[i]
     #Fill area between all members
@@ -264,10 +268,14 @@ def drawAllPc(pc_text_file: Path, pc_png_file: Path, members_number): #ALL parti
     plt.annotate("START", (pc1_mean_arr[0], pc2_mean_arr[0] + 0.1), fontsize=6)
     for i in range(3, len(text31), 3): # Mark every 3 day as number
         plt.annotate(text31[i], (pc1_mean_arr[i], pc2_mean_arr[i] + 0.1), fontsize=5)
-    plt.legend( loc = "upper right") # No legend shift 
+
+    legend = plt.legend( loc = "upper right", frameon = False) # No legend shift
+    plt.tick_params(top = True, right = True, axis='both', direction='in')
+
 # Save into the file
     saveFig(pc_png_file)
-
+    
+#===========================================================
 def drawCor(pc_text_file: Path, pc_png_file: Path, members_number):
     print("drawCor")
     print("path pc: ", pc_text_file)
@@ -281,7 +289,7 @@ def drawCor(pc_text_file: Path, pc_png_file: Path, members_number):
     plt.plot(np.arange(len(pc1_all_memb[0])), corr, marker='.', color='blue', ms=2.5, linewidth=1.2)
     saveFig(pc_png_file)
 
-
+#===========================================================
 def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number):
     print("drawRmse")
     print("path pc: ", pc_text_file)
@@ -292,10 +300,10 @@ def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number):
     fig, ax = plt.subplots()
     plt.xlabel('days')
     plt.ylabel('RMSE')
-    plt.plot(np.arange(len(pc1_all_memb[0])), rmse, marker='.', color='black', ms=2.5, label='jan', linewidth=1.2)
+    plt.plot(np.arange(len(pc1_all_memb[0])), rmse, marker='.', color='black', ms=2.5,  linewidth=1.2)
     saveFig(pc_png_file)
 
-
+#===========================================================
 def drawMsss(pc_text_file: Path, pc_png_file: Path, members_number): 
     print("drawMsss")
     print("path pc: ", pc_text_file)
@@ -306,18 +314,25 @@ def drawMsss(pc_text_file: Path, pc_png_file: Path, members_number):
     fig, ax = plt.subplots()
     plt.xlabel('days')
     plt.ylabel('MSSS')
-    plt.plot(np.arange(len(pc1_all_memb[0])), msss, marker='.', color='black', ms=2.5, label='jan', linewidth=1.2)
+    plt.plot(np.arange(len(pc1_all_memb[0])), msss, marker='.', color='black', ms=2.5, linewidth=1.2)
     saveFig(pc_png_file)
 
-def saveFig(pc_png_file):
+#===========================================================
+def saveFig(pc_png_file, make_dir=False):
     print("path graph: ", pc_png_file)
-    exists = os.path.exists(pc_png_file)
-    if not exists:
-       os.makedirs(pc_png_file)
+    fig_path = ""
     fig_name = os.path.basename(pc_png_file)
-    plt.savefig(f'{pc_png_file}/{fig_name}.png')
+    if make_dir:
+        exists = os.path.exists(pc_png_file)
+        if not exists:
+           os.makedirs(pc_png_file)
+        fig_path = f'{pc_png_file}/{fig_name}.png'
+    else:
+        fig_path = f'{pc_png_file}.png'
+    plt.savefig(fig_path)
     plt.close()
-    print("Graph saved: ", f'{pc_png_file}/{fig_name}.png')
+    print("Graph saved: ", fig_path)
+
 
 
 

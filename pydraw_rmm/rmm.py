@@ -135,7 +135,6 @@ for h in range(24):
             s = s.replace("<hour>"  , str(hour))
             s = s.replace("<var>"   , str(var))
             s = s.replace("<member>", str(member))
-            
             ncfile[dt][var] = config[dt]["dir"] + "/" + dv + "/" + str(s) #Good for script
 
             if (os.path.isfile(ncfile[dt][var])):  
@@ -159,7 +158,10 @@ for h in range(24):
 
         member_counter += 1 # If we draw forecast -> we have the member
         ### Names of output files and graphs
-        pc_name = config["dirout"] + "/mjo-rmm_" + config["year"] + config["month"] + config["day"] + str(hour) + "-" + str(member)
+        pc_path = config["dirout"] + "/mjo-rmm_" + config["year"]
+        if not os.path.exists(pc_path):
+           os.makedirs(pc_path)
+        pc_name = pc_path + "/member_" + config["month"] + config["day"] + str(hour) + "-" + str(member)
         pcstxtfile = pc_name
         psc_png_file = pc_name
 
@@ -203,21 +205,22 @@ for h in range(24):
         #print("--- %s seconds totally ---" % (time_p.time() - start_time))
 f.close() 
 
-pcs_txt_file_all_memb = config["dirout"] + "/mjo-rmm_all_members" + config["year"]
+conf_date = config["year"] + config["month"] + config["day"] + str(hour) 
+pcs_txt_file_all_memb = config["dirout"] + "/mjo-rmm_all_members"
 with open(f'{pcs_txt_file_all_memb}.txt','w') as file: #Save all_members_dfs into file as dataframe  
     for dframe in all_members_dfs :
         dframe.to_csv(file, index=False, header=False)
 
-psc_png_file_all_memb = config["dirout"] + "/mjo-rmm_all_members" + config["year"] #Place and name to store all members' graphic
+psc_png_file_all_memb = config["dirout"] + "/mjo-rmm_all_members_" + config["year"] + config["month"] + config["day"]
 drawAllPc(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_all_memb}', member_counter)
 ###***Updated 31.07.2023***### 
-psc_png_file_cor = config["dirout"] + "/mjo-rmm_cor" + config["year"] 
+psc_png_file_cor = config["dirout"] + "/mjo-rmm_cor_" + config["year"] + config["month"] + config["day"]
 drawCor(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_cor}', member_counter)
 
-psc_png_file_rmse = config["dirout"] + "/mjo-rmm_rmse" + config["year"] 
+psc_png_file_rmse = config["dirout"] + "/mjo-rmm_rmse_" + config["year"] + config["month"] + config["day"]
 drawRmse(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_rmse}', member_counter)
 
-psc_png_file_msss = config["dirout"] + "/mjo-rmm_msss" + config["year"] 
+psc_png_file_msss = config["dirout"] + "/mjo-rmm_msss_" + config["year"] + config["month"] + config["day"]
 drawMsss(f'{pcs_txt_file_all_memb}.txt', f'{psc_png_file_msss}', member_counter)
 ##############################
 
