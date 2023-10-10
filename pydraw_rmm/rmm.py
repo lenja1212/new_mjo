@@ -34,11 +34,11 @@ variance_u850_all = 1.81
 
 vars=[ "olr", "u850hpa", "u200hpa" ]
 
-
+#default parametrs, if they are not set in mjo_rmm.sh
 config = {
-  "date":  "2014123000",
+  "date":  "1993123000", #change 2007123000
   "dirin": "",
-  "dirout": "",
+  "dirout": "/home/leonid/Desktop/MSU/mj0-rmm",
   "direra5": "",
   "slav": {
     "pattern": "erfclim-<var>-<year><month><day><hour>-<member>.nc"
@@ -135,7 +135,9 @@ for h in range(24):
             s = s.replace("<hour>"  , str(hour))
             s = s.replace("<var>"   , str(var))
             s = s.replace("<member>", str(member))
-            ncfile[dt][var] = config[dt]["dir"] + "/" + dv + "/" + str(s) #Good for script
+            # ncfile[dt][var] = config[dt]["dir"] + "/" + dv + "/" + str(s) #Good for script
+            # #ncfile[dt][var] = "/home/leonid/mjo/mjoindices/tests/testdata/plav" + "/" + dv + "/" + str(s) #rname to slav
+            ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/slav" + "/" + dv + "/" + str(s) # GOOD script and py
 
             if (os.path.isfile(ncfile[dt][var])):  
               # print (dt + " file found: " + ncfile[dt][var])

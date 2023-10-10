@@ -8,8 +8,8 @@ def findCor(pc1_all_memb, pc2_all_memb, memb_to_draw): ### W:
 	pc_days = len(pc1_all_memb[0])
 	for i in range(0, pc_days):
 		dayly_pc1, dayly_pc2 = getDaylyPc(pc1_all_memb, pc2_all_memb, memb_to_draw, i)
-		numenator_pc1 = pc1_all_memb[-1][i] * np.sum(dayly_pc1) #a1 * b1
-		numenator_pc2 = pc2_all_memb[-1][i] * np.sum(dayly_pc2) #a2 * b2
+		numenator_pc1 = pc1_all_memb[-1][i] * np.sum(dayly_pc1) #a1 * b1; pc1_all_memb[-1][i] - observed RMM1
+		numenator_pc2 = pc2_all_memb[-1][i] * np.sum(dayly_pc2) #a2 * b2; pc2_all_memb[-1][i] - observed RMM2
 		denom_1 = np.sqrt( memb_to_draw * np.power(pc1_all_memb[-1][i], 2)  + memb_to_draw * np.power(pc2_all_memb[-1][i], 2) )  
 		denom_2 = np.sqrt( np.sum(np.power(dayly_pc1, 2)) + np.sum(np.power(dayly_pc2, 2)) )
 		corr.append( (numenator_pc1 + numenator_pc2) / (denom_1 * denom_2) )
@@ -71,4 +71,9 @@ def getDaylyPc(pc1_all_memb, pc2_all_memb, memb_to_draw, day):
 		dayly_pc1.append(pc1_all_memb[j][day])
 		dayly_pc2.append(pc2_all_memb[j][day])
 	return dayly_pc1, dayly_pc2
+
+def saveMetric(var_name, var, path):
+    df = pd.DataFrame({f'{var_name}': var})
+    df.to_csv(f'{path}.txt', index=False, float_format="%.5f")
+
 

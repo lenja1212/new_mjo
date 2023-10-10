@@ -26,6 +26,9 @@ ncext=".nc"
 #dir_era5="/RHM-Lustre3.2/users/wg-slmod/rfadeev/NWPlab/stuff/mjo-rmm/era5-1979-2022"
 dir_era5="/home/leonid/Desktop/MSU/mj0-rmm"
 fn_era5_pattern="era5-<var>-day-2p5grid-all.nc"
+# dir_era5="/home/leonid/Desktop/lftp_ncep/" #ncep
+# fn_era5_pattern="<var>ncep-all.nc" #ncep
+
 suffix_timemean="tm"
 suffix_timemean_lpf="tmlpf"
 
@@ -108,7 +111,7 @@ function gen_fntmp()
 #======================================
 
 gen_fntmp fntmp_15 fntmp_1 fntmp_s fntmp_ftyclim fntmp_001 fntmp_01 fntmp_merged fntmp_merged_ax fntmp_merged_sub_tm fnera5tmlpf fntmp_merged_sub_tmclim1
-gen_fntmp fntmp_merged_sub_tmclim_runm fntmp_sub_ftcl_subr fntmp_ydaymean_anom816V13
+gen_fntmp fntmp_merged_sub_tmclim_runm fntmp_sub_ftcl_subr fntmp_ydaymean_anom816V13 ncep
 get_dates $1 # get year month day
 
 let yearp=$year+1
@@ -116,27 +119,13 @@ let yearm=$year-1
 
 date_start=$yearp-01-01
 date_end=$yearp-03-28 
-bdate_start=$year-09-04
-bdate_end=$year-12-31
+dt_120=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 117 day")
+dt_120_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 1 day")
+bdate_start=${dt_120:0:4}"-"${dt_120:4:2}"-"${dt_120:6:2}
+bdate_end=${dt_120_end:0:4}"-"${dt_120_end:4:2}"-"${dt_120_end:6:2}
 y_shift=$(($yearp-1992))year
-
-
 echo "date:           "$year" "$month" "$day
 echo "bdate_start: " $bdate_start " bdate_end: " $bdate_end
-dt_120=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 117 day")
-echo $dt_120 
-bdstart1=${dt_120:0:4}
-year3=${dt_120:0:4}
-month3=${dt_120:4:2}
-day3=${dt_120:6:2}
-hour3=${dt_120:9:2}
-echo "bdstart1: " $bdstart1
-echo "date2:           "$year3" "$month3" "$day3
-bdstart11=${dt_120:0:4}"-"${dt_120:4:2}"-"${dt_120:6:2}
-echo "bdstart11: " $bdstart11
-dt_120_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 2 day")
-echo $dt_120_end 
-exit 0
 
 for dir in $dir_out $dir_out_era5 $dir_out_slav $dir_out_py $dir_temp; do
   if [ ! -d $dir ]; then
@@ -185,7 +174,6 @@ if $simulate_slav_by_era5; then
     echo "simulate_slav_by_era5 fnout: " $fnout
     # /home/leonid/mjo/mjoindices/tests/testdata/plav//olr/erfclim.14123000_00-olr.nc
 
-
     cdo seldate,$year-$month-$day,$year2-$month2-$day2 $fnin $fntmp_15
     
     cdo shifttime,-${shift_day}day  $fntmp_15  $fntmp_1
@@ -197,7 +185,6 @@ if $simulate_slav_by_era5; then
   done
 fi
 
-
 if $parse_era5; then
   for var in $vars ; do
     echo "parsing era5 $var"
@@ -205,7 +192,7 @@ if $parse_era5; then
     fnin=${fn_era5_pattern//"<var>"/$var}
     fnout=${fnin//$ncext/"-"$suffix_timemean$ncext}
     echo "era fnout" $fnout
-    cdo timmean   -del29feb -seldate,1979-01-01,2001-12-31     ${dir_era5}/${var}/$fnin  ${dir_out_era5}/$fnout
+    cdo timmean   -del29feb -seldate,1979-01-01,2001-12-31  ${dir_era5}/${var}/$fnin  ${dir_out_era5}/$fnout
     cdo sub       -del29feb -seldate,1979-01-01,2015-12-31  ${dir_era5}/${var}/$fnin  ${dir_out_era5}/$fnout  $fntmp1
     # climatology
     cdo ydaymean  -del29feb -seldate,1979-01-01,2001-12-31     $fntmp1  $fntmp2
@@ -221,7 +208,7 @@ if $parse_slav; then
   
   for hour in $hours
   do
-    for member in {00..25} #{00..99}
+    for member in {00..4} #{00..99} ..25 ;  4 now
     do
       # echo "hour/member: "$hour"/"$member
       
@@ -232,7 +219,7 @@ if $parse_slav; then
       
       for var in $vars; do
         fnera5=${fn_era5_pattern//"<var>"/$var}
-
+        echo "fnera5: " $fnera5
         fnera5tm=$dir_out_era5/${fnera5//$ncext/"-"$suffix_timemean$ncext}
         fnera5tmlpf=$dir_out_era5/${fnera5//$ncext/"-"$suffix_timemean_lpf$ncext}
         fnera5=$dir_era5/$var/$fnera5
@@ -253,7 +240,12 @@ if $parse_slav; then
           fnout=$dir_out_slav/erfclim-$var-$year$month$day$hour-$member.nc
           
           check_if_files_exist  $fnera5  $fnin $fntmp_15
-
+#### Ncep only
+          # cdo griddes $fnera5 > mygrid
+          # sed -i "s/generic/lonlat/g" mygrid
+          # cdo setgrid,mygrid $fnera5 $ncep
+          # $fnera5=$ncep
+####
           cdo -remapycon,$fnera5  $fnin  $fntmp_15
           cdo shifttime,0day $fntmp_15   $fntmp_1
           cdo shifttime,$y_shift  $fntmp_1  $fntmp_s
@@ -266,19 +258,27 @@ if $parse_slav; then
             # cdo -settaxis,$date_start,12:00:00,1day -seldate,$date_start,$date_end  $fnera5  $fntmp_001
           fi
           cdo -O mergetime   $fntmp_01  $fntmp_001  $fntmp_merged
-          echo $fntmp_merged
 
           cdo settaxis,$bdate_start,12:00:00,1day  $fntmp_merged  $fntmp_merged_ax
           cdo sub  $fntmp_merged_ax  $fnera5tm  $fntmp_merged_sub_tm
+
           cdo ydaysub -del29feb  $fntmp_merged_sub_tm  $fnera5tmlpf  $fntmp_merged_sub_tmclim1
+          echo "fnera5tmlpf: " $fnera5tmlpf
+          echo "fntmp_merged_sub_tmclim1: " $fntmp_merged_sub_tmclim1
           cdo runmean,120  -seldate,$bdate_start,$date_end  $fntmp_merged_sub_tmclim1  $fntmp_merged_sub_tmclim_runm
           cdo sub -seldate,$date_start,$date_end  $fntmp_merged_sub_tmclim1  $fntmp_merged_sub_tmclim_runm  $fntmp_sub_ftcl_subr
+
+          echo "fntmp_merged_sub_tmclim_runm: " $fntmp_merged_sub_tmclim_runm
+          echo "fntmp_sub_ftcl_subr: " $fntmp_sub_ftcl_subr
+
           cdo -sellonlatbox,0.0,357.5,-15.0,15.0  -seldate,$date_start,$date_end  $fntmp_sub_ftcl_subr  $fntmp_ydaymean_anom816V13
+          echo "fntmp_ydaymean_anom816V13: " $fntmp_ydaymean_anom816V13
           cdo mermean  $fntmp_ydaymean_anom816V13  $fnout
-          echo "parse_slav fnout: " $fnout
+          echo "mermean: " $fnout
           
           let nfnoutlist=$nfnoutlist+1
           echo "nfnoutlist: " $nfnoutlist
+          # exit 0
         fi
       done
     done 

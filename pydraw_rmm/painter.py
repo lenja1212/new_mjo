@@ -127,7 +127,7 @@ def drawPc_OLD(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1
 def drawPc(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1): #only one month
     pc1 = []
     pc2 = []
-    days = np.arange(0, 93, 1, dtype=int)
+    # days = np.arange(0, 93, 1, dtype=int)
     #  PCs2     PsCs
     print("path pc: ", pc_text_file)
     with open(pc_text_file) as f1:
@@ -288,9 +288,10 @@ def drawCor(pc_text_file: Path, pc_png_file: Path, members_number):
     plt.ylabel('Correlation')
     plt.plot(np.arange(len(pc1_all_memb[0])), corr, marker='.', color='black', ms=2.5, linewidth=1.2)
     saveFig(pc_png_file)
+    saveMetric("Cor", corr, pc_png_file)
 
 #===========================================================
-def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number):
+def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number): # TODO devide on find and draw functions 
     print("drawRmse")
     print("path pc: ", pc_text_file)
     pc1_all_memb, pc2_all_memb = getMembersPc(pc_text_file, members_number)
@@ -302,6 +303,7 @@ def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number):
     plt.ylabel('RMSE')
     plt.plot(np.arange(len(pc1_all_memb[0])), rmse, marker='.', color='black', ms=2.5,  linewidth=1.2)
     saveFig(pc_png_file)
+    saveMetric("RMSE", rmse, pc_png_file)
 
 #===========================================================
 def drawMsss(pc_text_file: Path, pc_png_file: Path, members_number): 
@@ -316,10 +318,10 @@ def drawMsss(pc_text_file: Path, pc_png_file: Path, members_number):
     plt.ylabel('MSSS')
     plt.plot(np.arange(len(pc1_all_memb[0])), msss, marker='.', color='black', ms=2.5, linewidth=1.2)
     saveFig(pc_png_file)
+    saveMetric("MSSS", msss, pc_png_file)
 
 #===========================================================
 def saveFig(pc_png_file, make_dir=False):
-    print("path graph: ", pc_png_file)
     fig_path = ""
     fig_name = os.path.basename(pc_png_file)
     if make_dir:
