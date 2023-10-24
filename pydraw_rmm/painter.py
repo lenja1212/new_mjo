@@ -286,7 +286,8 @@ def drawCor(pc_text_file: Path, pc_png_file: Path, members_number):
     fig, ax = plt.subplots()
     plt.xlabel('days')
     plt.ylabel('Correlation')
-    plt.plot(np.arange(len(pc1_all_memb[0])), corr, marker='.', color='black', ms=2.5, linewidth=1.2)
+    ax.plot([0, 1], [0.5, 0.5], transform=ax.transAxes, color='k', linewidth = 0.5, ls="--" )
+    plt.plot(np.arange(len(corr)), corr, marker='.', color='black', ms=2.5, linewidth=1.2) # -1: start from the second day of plav 
     saveFig(pc_png_file)
     saveMetric("Cor", corr, pc_png_file)
 
@@ -301,7 +302,8 @@ def drawRmse(pc_text_file: Path, pc_png_file: Path, members_number): # TODO devi
     fig, ax = plt.subplots()
     plt.xlabel('days')
     plt.ylabel('RMSE')
-    plt.plot(np.arange(len(pc1_all_memb[0])), rmse, marker='.', color='black', ms=2.5,  linewidth=1.2)
+    ax.plot([0, 1], [0.5, 0.5], transform=ax.transAxes, color='k', linewidth = 0.5, ls="--" )
+    plt.plot(np.arange(len(rmse)), rmse, marker='.', color='black', ms=2.5,  linewidth=1.2)
     saveFig(pc_png_file)
     saveMetric("RMSE", rmse, pc_png_file)
 
@@ -316,7 +318,8 @@ def drawMsss(pc_text_file: Path, pc_png_file: Path, members_number):
     fig, ax = plt.subplots()
     plt.xlabel('days')
     plt.ylabel('MSSS')
-    plt.plot(np.arange(len(pc1_all_memb[0])), msss, marker='.', color='black', ms=2.5, linewidth=1.2)
+    ax.plot([0, 1], [0.5, 0.5], transform=ax.transAxes, color='k', linewidth = 0.5, ls="--" )
+    plt.plot(np.arange(len(msss)), msss, marker='.', color='black', ms=2.5, linewidth=1.2)
     saveFig(pc_png_file)
     saveMetric("MSSS", msss, pc_png_file)
 

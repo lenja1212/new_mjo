@@ -6,11 +6,11 @@ def findCor(pc1_all_memb, pc2_all_memb, memb_to_draw): ### W:
 	# print("findCor")
 	corr = []
 	pc_days = len(pc1_all_memb[0])
-	for i in range(0, pc_days):
+	for i in range(0, pc_days-1): # start from the second day of era
 		dayly_pc1, dayly_pc2 = getDaylyPc(pc1_all_memb, pc2_all_memb, memb_to_draw, i)
-		numenator_pc1 = pc1_all_memb[-1][i] * np.sum(dayly_pc1) #a1 * b1; pc1_all_memb[-1][i] - observed RMM1
-		numenator_pc2 = pc2_all_memb[-1][i] * np.sum(dayly_pc2) #a2 * b2; pc2_all_memb[-1][i] - observed RMM2
-		denom_1 = np.sqrt( memb_to_draw * np.power(pc1_all_memb[-1][i], 2)  + memb_to_draw * np.power(pc2_all_memb[-1][i], 2) )  
+		numenator_pc1 = pc1_all_memb[-1][i+1] * np.sum(dayly_pc1) #a1 * b1; pc1_all_memb[-1][i] - observed RMM1
+		numenator_pc2 = pc2_all_memb[-1][i+1] * np.sum(dayly_pc2) #a2 * b2; pc2_all_memb[-1][i] - observed RMM2
+		denom_1 = np.sqrt( memb_to_draw * np.power(pc1_all_memb[-1][i+1], 2)  + memb_to_draw * np.power(pc2_all_memb[-1][i+1], 2) )  
 		denom_2 = np.sqrt( np.sum(np.power(dayly_pc1, 2)) + np.sum(np.power(dayly_pc2, 2)) )
 		corr.append( (numenator_pc1 + numenator_pc2) / (denom_1 * denom_2) )
 	return corr
@@ -19,10 +19,10 @@ def findRmse(pc1_all_memb, pc2_all_memb, memb_to_draw): #
 	# print("findRmse")
 	rmse = []
 	pc_days = len(pc1_all_memb[0])
-	for i in range(0, pc_days): 
+	for i in range(0, pc_days-1): # start from the second day of era
 		dayly_pc1, dayly_pc2 = getDaylyPc(pc1_all_memb, pc2_all_memb, memb_to_draw, i)
-		delta_1 = pc1_all_memb[-1][i] - np.array(dayly_pc1)
-		delta_2 = pc2_all_memb[-1][i] - np.array(dayly_pc2)
+		delta_1 = pc1_all_memb[-1][i+1] - np.array(dayly_pc1)
+		delta_2 = pc2_all_memb[-1][i+1] - np.array(dayly_pc2)
 		numenator_1 = np.sum( np.power(delta_1, 2 ) ) 
 		numenator_2 = np.sum( np.power(delta_2, 2 ) ) 
 		rmse.append( np.sqrt( (numenator_1 + numenator_2) / memb_to_draw) )
@@ -35,8 +35,8 @@ def findMsss(pc1_all_memb, pc2_all_memb, memb_to_draw):
 	pc_days = len(pc1_all_memb[0])
 	rmse = findRmse(pc1_all_memb, pc2_all_memb, memb_to_draw)
 	mse_f = np.power(rmse, 2)
-	for i in range(0, pc_days): # days in pc
-		mse_c_numen = memb_to_draw * ( np.power(pc1_all_memb[-1][i], 2)  + np.power(pc2_all_memb[-1][i], 2) )
+	for i in range(0, pc_days-1): # days in pc # start from the second day of era
+		mse_c_numen = memb_to_draw * ( np.power(pc1_all_memb[-1][i+1], 2)  + np.power(pc2_all_memb[-1][i+1], 2) )
 		mse_c.append(mse_c_numen / memb_to_draw) 
 	msss = 1 - mse_f / mse_c
 	return msss

@@ -8,7 +8,7 @@ def getAllMetrixMembers(var_name, year_start, var_num):
 	years = np.arange(year_start, year_start+var_num, 1, dtype=int) # year_start ... year_end - 1
 	for year in years:
 		print("year: ",year)
-		metric_text_file = f'/home/leonid/Desktop/MSU/mj0-rmm/mjo-rmm/mjo-rmm_{var_name}_{year}1230.txt' 
+		metric_text_file = f'/home/leonid/Desktop/MSU/mj0-rmm/mjo-rmm/mjo-rmm_{var_name}_{year}1230.txt'
 		print("path metric: ", metric_text_file)
 		with open(metric_text_file) as f1:
 			next(f1)
@@ -55,10 +55,11 @@ plt.ylabel('Corr')
 for cor in cor_metrics:
 	plt.plot(np.arange(len(cor)), cor, color='black', ms=2.5,  linewidth=0.5)
 
+print(len(mean_metric))
 plt.plot(np.arange(len(mean_metric)), mean_metric, marker='.', color='red', ms=2.5,  linewidth=1.2, label='Mean')
 plt.plot(np.arange(len(metric_perc_50)), metric_perc_50, marker='.', color='blue', ms=2.5,  linewidth=1.2, label='50 percentile')
 plt.plot(np.arange(len(metric_perc_100)), metric_perc_100, marker='.', color='green', ms=2.5,  linewidth=1.2, label='100 percentile')
-
+plt.axhline(y=0.0, color='black', linestyle='-', linewidth=0.5)
 plt.legend()
 # plt.show()
 metric_png_file = f'/home/leonid/Desktop/MSU/mj0-rmm/mjo-rmm/mjo-rmm_cor'
