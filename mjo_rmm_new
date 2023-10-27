@@ -1,0 +1,272 @@
+#!/bin/bash
+
+# input:
+#   2014123000
+#   dir in (slav)
+#   dir out
+
+vars="olr u850hpa u200hpa"
+hours="00 06 12 18"
+fntmp_list=""
+
+dir_slav="/home/leonid/mjo/mjoindices/tests/testdata/plav/"
+dir_out="/home/leonid/Desktop/MSU/mj0-rmm/era5/"
+dir_temp="./temp/"
+input_dir_era5="/home/leonid/Desktop/MSU/mj0-rmm"
+fn_era5_pattern="era5-<var>-day-2p5grid-all.nc"
+fn_slav_pattern="erfclim.<date>_<ensmember>-<var>.nc"
+# dir_era5="/home/leonid/Desktop/lftp_ncep/" #ncep
+# fn_era5_pattern="<var>ncep-all.nc" #ncep
+
+nc=".nc"
+suffix_timemean="-timemean.nc"
+suffix_timemean_lpf="-tmlpassflt.nc"
+
+#======================================
+function generate_tmp_nc_names() {
+    while [ $# -gt 0 ]; do
+        local tmp_name=$1
+        local tmp_file=$dir_temp"temp"${RANDOM}${RANDOM}$nc
+        fntmp_list=$fntmp_list" "$tmp_file
+        if [[ "$tmp_name" ]]; then
+            eval $tmp_name="'$tmp_file'"
+        else
+            echo "$fn"
+        fi
+        shift
+    done
+}
+
+#======================================
+function parse_input_date() {
+    if [ $# -le 0 ]; then echo "Error: argument missed in get_dates"; exit; fi;
+    if [ $# -ge 2 ]; then echo "Error: too many arguments in get_dates"; exit; fi;
+    year=${1:0:4}
+    month=${1:4:2}
+    day=${1:6:2}
+    local hour=${1:8:2}
+    echo "Start date (yyyy mm day hour):" $year $month $day $hour
+}
+
+#======================================
+function generate_dir_out() {
+    for dir in $dir_out $output_dir_era5 $output_dir_slav $dir_out_py $dir_temp; do
+        if [ ! -d $dir ]; then
+            echo "creating: "$dir
+            mkdir -p $dir
+        fi
+    done
+}
+
+#======================================
+function shift_input_dates() {
+    input_date_start=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 2 day")
+    input_date_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 88 day")
+    previous_date_start=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 118 day")
+    previous_date_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 1 day")
+
+    date_start=${input_date_start:0:4}"-"${input_date_start:4:2}"-"${input_date_start:6:2}
+    date_end=${input_date_end:0:4}"-"${input_date_end:4:2}"-"${input_date_end:6:2}
+    prev_date_start=${previous_date_start:0:4}"-"${previous_date_start:4:2}"-"${previous_date_start:6:2}
+    prev_date_end=${previous_date_end:0:4}"-"${previous_date_end:4:2}"-"${previous_date_end:6:2}
+
+    let year_next=$year+1
+    year_shift=$(($year_next-1992))year
+
+    echo "date_start      "$date_start
+    echo "date_end        "$date_end
+    echo "prev_date_start "$prev_date_start
+    echo "prev_date_end   "$prev_date_end
+    echo "year_shift      "$year_shift #TODO del year
+}
+
+#======================================
+function find_climatology() { # can be calculated once ???
+    for var in $vars ; do
+        echo "parsing era5 $var"
+        local era5_pattern_file=${fn_era5_pattern//"<var>"/$var}
+
+        # Long term mean
+        cdo timmean   -del29feb -seldate,1979-01-01,2001-12-31  ${input_dir_era5}/${var}/$era5_pattern_file  $fntmp_timemean
+        cdo sub       -del29feb -seldate,1979-01-01,2015-12-31  ${input_dir_era5}/${var}/$era5_pattern_file  $fntmp_timemean  $fntmp_sub_timemean
+        # Climatology
+        cdo ydaymean  -del29feb -seldate,1979-01-01,2001-12-31  $fntmp_sub_timemean  $fntmp_clim
+        # Set missing values to 0 
+        cdo setmisstoc,0  $fntmp_clim  $fntmp_clim_fill
+        echo $fntmp_clim_fill
+        # Smooth 
+#        cdo lowpass,3 -del29feb  $fntmp_clim_fill  ${output_dir_era5}/${era5_pattern_file//$nc/""$suffix_timemean_lpf} #change on tmp ?
+        cdo lowpass,3 -del29feb  $fntmp_clim_fill  $fntmp_clim_fill_lp
+
+    done
+}
+
+#======================================
+function check_if_files_exist() {
+  if [ $# -eq 0 ]; then echo "Error: argument missed in check_if_files_exist"; exit; fi;
+    for fn in $1; do
+        if [ ! -e $fn ]; then
+            echo "Error file not found: "$fn
+            exit
+        else
+            echo "File found: " $fn
+        fi
+    done
+}
+
+#======================================
+function remap_slav_member_pattern() {
+    local pattern=$1
+    local ens_member_file=$2
+    cdo -remapycon,${input_dir_era5}/${var}/$era5_pattern_file  $input_dir_slav/$ens_member_file  $fntmp_ens_memb_remap
+    cdo shifttime,0day $fntmp_ens_memb_remap   $fntmp_remap_shift
+    cdo shifttime,$year_shift  $fntmp_remap_shift  $fntmp_remap_shift_s
+    cdo seldate,$date_start,$date_end  $fntmp_remap_shift_s  $fntmp_memb_sel_date
+    cdo -settaxis,$date_start,12:00:00,1day  $fntmp_memb_sel_date  $fntmp_var_dates
+}
+
+#======================================
+function process_slav_variable() {
+    for var in $vars; do
+        slav_member_h_m_v=${1//"<var>"/$var}
+        era5_pattern_file=${fn_era5_pattern//"<var>"/$var}
+        cdo -settaxis,$prev_date_start,12:00:00,1day -seldate,$prev_date_start,$prev_date_end ${input_dir_era5}/${var}/$era5_pattern_file $fntmp_era5_prev_dates
+        cdo -settaxis,$date_start,12:00:00,1day -seldate,$date_start,$date_end  ${input_dir_era5}/${var}/$era5_pattern_file  $fntmp_var_dates
+        remap_slav_member_pattern $var $slav_member_h_m_v
+        cdo -O mergetime   $fntmp_era5_prev_dates  $fntmp_var_dates  $fntmp_merged
+        cdo settaxis,$prev_date_start,12:00:00,1day  $fntmp_merged  $fntmp_merged_ax #TODO check if necessary
+    done
+}
+
+#======================================
+function process_era_variable() {
+    for var in $vars; do
+        era5_pattern_file=${fn_era5_pattern//"<var>"/$var}
+        cdo -settaxis,$prev_date_start,12:00:00,1day -seldate,$prev_date_start,$prev_date_end ${input_dir_era5}/${var}/$era5_pattern_file $fntmp_era5_prev_dates
+        cdo -settaxis,$date_start,12:00:00,1day -seldate,$date_start,$date_end  ${input_dir_era5}/${var}/$era5_pattern_file  $fntmp_var_dates
+        cdo -O mergetime   $fntmp_era5_prev_dates  $fntmp_var_dates  $fntmp_merged
+        cdo settaxis,$prev_date_start,12:00:00,1day  $fntmp_merged  $fntmp_merged_ax #TODO check if necessary
+    done
+}
+
+#======================================
+function substract_climatology() {
+    cdo sub $fntmp_merged_ax  $fntmp_timemean  $fntmp_merged_sub_tm
+    cdo ydaysub -del29feb  $fntmp_merged_sub_tm  $fntmp_clim_fill_lp  $fntmp_merged_sub_tmclim1
+}
+
+#======================================
+function runmean() {
+    cdo runmean,120  -seldate,$prev_date_start,$date_end  $fntmp_merged_sub_tmclim1  $fntmp_merged_sub_tmclim_runm
+    cdo sub -seldate,$date_start,$date_end  $fntmp_merged_sub_tmclim1  $fntmp_merged_sub_tmclim_runm  $fntmp_sub_ftcl_sub_runm
+}
+
+#======================================
+function find_average_field() {
+    field_patter=$1
+    cdo -sellonlatbox,0.0,357.5,-15.0,15.0  -seldate,$date_start,$date_end  $fntmp_sub_ftcl_sub_runm $fntmp_mapped
+
+}
+#======================================
+function find_mermean_field() {
+    file_name_out=$1
+    cdo mermean  $fntmp_mapped  $file_name_out
+}
+
+#======================================
+function process_slav_members() {
+    for hour in $hours; do
+        date_forecast=${year:2:2}$month$day$hour
+        slav_member_h=${fn_slav_pattern//"<date>"/$date_forecast}
+
+        # Set the number of ensemble member HERE!
+        for member in {00..04}; do 
+            file_name_out=$output_dir_slav/erfclim-$var-$year$month$day$hour-$member.nc
+            slav_member_h_m=${slav_member_h//"<ensmember>"/$member}            
+            process_slav_variable $slav_member_h_m
+            substract_climatology
+            runmean 
+            find_average_field 
+            find_mermean_field file_name_out
+            let processed_members=$processed_members+1
+            echo "----------------------"
+        done
+    done
+}
+
+#======================================
+function process_era5_reference() {
+    file_name_out=$dir_out_slav/erfclim-$var-$year$month$day$hour-99.nc #TODO filename костыль
+    process_era_variable
+    substract_climatology
+    runmean 
+    find_average_field 
+    find_mermean_field file_name_out
+    echo "----------------------"
+}
+#======================================
+function find_rmm_and_metrix() {
+    echo "parse py nfnoutlist: " $nfnoutlist
+    echo $year$month$day$hour $dir_out_slav $dir_era5 $dir_out_py
+    python3 ./rmm.py date=$year$month$day$hour dirin=$dir_out_slav  direra5=$dir_era5  dirout=$dir_out_py # Good
+
+    # simulate_slav_by_era5
+}
+
+#======================================
+function delete_tmp_files() {
+    for fn in $fntmp_list; do
+        if [ -e $fn ]; then
+            echo "remove $fn"
+            rm $fn
+        fi
+    done    
+}
+
+#======================================
+
+#******* MAIN ***********
+
+if [ ! $# -eq 3 ]; then
+  echo "wrong number of input arguments!"
+  exit
+fi
+
+input_date=$1
+input_dir_slav=$2
+dir_out=$3
+output_dir_era5=${dir_out}"/era5"
+output_dir_slav=${dir_out}"/slav"
+dir_out_py=${dir_out}"/mjo-rmm"
+
+echo "Input slav dir: "$input_dir_slav
+echo "Input era5 dir: "$input_dir_era5
+echo "Output dir:     "$dir_out
+
+parse_input_date $input_date 
+generate_dir_out
+shift_input_dates
+
+generate_tmp_nc_names fntmp_timemean fntmp_sub_timemean fntmp_clim fntmp_clim_fill fntmp_clim_fill_lp
+find_climatology
+
+generate_tmp_nc_names fntmp_ens_memb_remap fntmp_remap_shift  fntmp_remap_shift_s fntmp_memb_sel_date fntmp_era5_prev_dates fntmp_var_dates
+generate_tmp_nc_names fntmp_merged fntmp_merged_ax fntmp_merged_sub_tm fnera5tmlpf fntmp_merged_sub_tmclim1
+generate_tmp_nc_names fntmp_merged_sub_tmclim_runm fntmp_sub_ftcl_sub_runm fntmp_mapped #ncep
+let processed_members=0
+process_slav_members 
+process_era5_reference
+
+cd pydraw_rmm
+python3 ./rmm.py date=$year$month$day$hour dirin=$output_dir_slav  direra5=$input_dir_era5  dirout=$dir_out_py # Good 
+cd ..
+
+delete_tmp_files
+
+
+#### Global?
+# fntmp_sub_timemean fntmp_clim fntmp_clim_fill
+#
+#
+###
+
