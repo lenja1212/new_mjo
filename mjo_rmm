@@ -109,23 +109,9 @@ function gen_fntmp()
   done
 }
 #======================================
-
 gen_fntmp fntmp_15 fntmp_1 fntmp_s fntmp_ftyclim fntmp_001 fntmp_01 fntmp_merged fntmp_merged_ax fntmp_merged_sub_tm fnera5tmlpf fntmp_merged_sub_tmclim1
 gen_fntmp fntmp_merged_sub_tmclim_runm fntmp_sub_ftcl_subr fntmp_ydaymean_anom816V13 ncep
 get_dates $1 # get year month day
-
-let yearp=$year+1
-let yearm=$year-1
-
-date_start=$yearp-01-01
-date_end=$yearp-03-28 
-dt_120=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 117 day")
-dt_120_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 1 day")
-bdate_start=${dt_120:0:4}"-"${dt_120:4:2}"-"${dt_120:6:2}
-bdate_end=${dt_120_end:0:4}"-"${dt_120_end:4:2}"-"${dt_120_end:6:2}
-y_shift=$(($yearp-1992))year
-echo "date:           "$year" "$month" "$day
-echo "bdate_start: " $bdate_start " bdate_end: " $bdate_end
 
 for dir in $dir_out $dir_out_era5 $dir_out_slav $dir_out_py $dir_temp; do
   if [ ! -d $dir ]; then
@@ -134,6 +120,7 @@ for dir in $dir_out $dir_out_era5 $dir_out_slav $dir_out_py $dir_temp; do
   fi
 done
 
+#===================================
 if $simulate_slav_by_era5; then
   echo "parsing era5 to simulate slav data"
   
@@ -185,6 +172,29 @@ if $simulate_slav_by_era5; then
   done
 fi
 
+#===================================
+let yearp=$year+1
+let yearm=$year-1
+
+
+dts=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 2 day")
+dte=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 88 day")
+y_shift=$(($yearp-1992))year
+date_start=${dts:0:4}"-"${dts:4:2}"-"${dts:6:2}
+date_end=${dte:0:4}"-"${dte:4:2}"-"${dte:6:2}
+
+dts0=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 118 day")
+dte0=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 1 day")
+bdate_start=${dts0:0:4}"-"${dts0:4:2}"-"${dts0:6:2}
+bdate_end=${dte0:0:4}"-"${dte0:4:2}"-"${dte0:6:2}
+
+echo "date_start  "$date_start
+echo "date_end    "$date_end
+echo "bdate_start "$bdate_start
+echo "bdate_end   "$bdate_end
+echo "y_shift     "$y_shift
+
+#===================================
 if $parse_era5; then
   for var in $vars ; do
     echo "parsing era5 $var"
@@ -212,9 +222,6 @@ if $parse_slav; then
     do
       # echo "hour/member: "$hour"/"$member
       
-      forc_year=$year
-      temp="${forc_year:2:2}" 
-      field_dates="$temp"$month$day"$hour"_$member
       date_forecast=${year:2:2}$month$day$hour
       
       for var in $vars; do
@@ -249,6 +256,8 @@ if $parse_slav; then
           cdo -remapycon,$fnera5  $fnin  $fntmp_15
           cdo shifttime,0day $fntmp_15   $fntmp_1
           cdo shifttime,$y_shift  $fntmp_1  $fntmp_s
+          echo "fntmp_s " $fntmp_s
+          
           cdo seldate,$date_start,$date_end  $fntmp_s  $fntmp_ftyclim
           cdo -settaxis,$bdate_start,12:00:00,1day -seldate,$bdate_start,$bdate_end  $fnera5  $fntmp_01
           if true; then # SLAV data

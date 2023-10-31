@@ -46,7 +46,7 @@ def drawPc_OLD(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1
     days = np.arange(0, 93, 1, dtype=int)
     #  PCs2     PsCs
     print("path pc: ", pc_text_file)
-    print("path graph: ", pc_png_file)
+
     with open(pc_text_file) as f1:
         next(f1)
         for line in f1:
@@ -120,7 +120,9 @@ def drawPc_OLD(pc_text_file: Path, pc_png_file: Path, inverse1 = 1, inverse2 = 1
         os.makedirs(pc_png_file)
     fig_name = os.path.basename(pc_png_file)
 
-    plt.savefig(f'{pc_png_file}/{fig_name}_{inverse1}_{inverse2}.png')
+
+    # plt.savefig(f'{pc_png_file}/{fig_name}_{inverse1}_{inverse2}.png')
+    saveFig(pc_png_file, False)
     plt.close()
 
 #===========================================================

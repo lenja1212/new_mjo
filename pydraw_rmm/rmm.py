@@ -36,7 +36,7 @@ vars=[ "olr", "u850hpa", "u200hpa" ]
 
 #default parametrs, if they are not set in mjo_rmm.sh
 config = {
-  "date":  "1993123000", #change 2007123000
+  "date":  "2014123000", #change 2007123000 1993123000
   "dirin": "",
   "dirout": "/home/leonid/Desktop/MSU/mj0-rmm",
   "direra5": "",
@@ -96,7 +96,7 @@ print("RMM \n")
 for h in range(24):
     # if h == 1:
       # break
-    for m in range(100):
+    for m in range(100): 
         # if m == 1:
           # break
         hour = str(h)
@@ -106,11 +106,7 @@ for h in range(24):
         if m < 10:
           member = "0" + member
         
-        # print("hour/member: " + hour + "/" + member)
-        
         config["hour"] = str(hour)
-        
-        
         ncfile = {
           "slav": {},
           "era5": {}
@@ -124,23 +120,25 @@ for h in range(24):
         scc=0
         for dt in [ "slav", "era5" ]:
           for var in vars:
-            if dt == "era5":
-              dv = var
-            else:
-              dv = ""
             s = config[dt]["pattern"]
             s = s.replace("<year>"  , str(config["year"]))
             s = s.replace("<month>" , str(config["month"]))
             s = s.replace("<day>"   , str(config["day"]))
             s = s.replace("<hour>"  , str(hour))
-            s = s.replace("<var>"   , str(var))
             s = s.replace("<member>", str(member))
+            s = s.replace("<var>"   , str(var))
+            # if dt == "era5":
+              # dv = var
+            # else:
+              # dv = ""
+
             # ncfile[dt][var] = config[dt]["dir"] + "/" + dv + "/" + str(s) #Good for script
-            # #ncfile[dt][var] = "/home/leonid/mjo/mjoindices/tests/testdata/plav" + "/" + dv + "/" + str(s) #rname to slav
-            ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/slav" + "/" + dv + "/" + str(s) # GOOD script and py
+            # ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/slav" + "/" + dv + "/" + str(s) # GOOD script and py old plav
+            # ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/calculated_data/slav" + "/" + dv + "/" + str(s) # GOOD script and py
+            ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/calculated_data/" + dt + "/" + str(s) # GOOD script and py
 
             if (os.path.isfile(ncfile[dt][var])):  
-              # print (dt + " file found: " + ncfile[dt][var])
+              print (dt + " file found: " + ncfile[dt][var])
               f = netcdf4.Dataset(ncfile[dt][var], "r")
               for v in config["era5"]["vars"]:
                 if v in f.variables:
@@ -151,7 +149,6 @@ for h in range(24):
               # print ("file NOT found for \n dt: " + dt + " \n var: " + var + " \n file: " + ncfile[dt][var])
               scc = -1
               break
-              exit()
           if scc == -1:
             break
         if not scc == 2*len(vars):
@@ -159,6 +156,7 @@ for h in range(24):
           continue
 
         member_counter += 1 # If we draw forecast -> we have the member
+
         ### Names of output files and graphs
         pc_path = config["dirout"] + "/mjo-rmm_" + config["year"]
         if not os.path.exists(pc_path):
@@ -177,9 +175,6 @@ for h in range(24):
         # variance_u850_all = np.std(df_u850_all)
         #********************************************#
 
-        # print("variance_olr: ",variance_olr, " variance_u200: ", variance_u200, " variance_u850: ", variance_u850, "\n")
-        # print("variance_olr_all: ",variance_olr_all, " variance_u200_all: ", variance_u200_all, " variance_u850_all: ", variance_u850_all, "\n")
-        
         dt = "era5"
         solver = MultivariateEof([data[dt]["olr"]/variance_olr_all, data[dt]["u850hpa"]/variance_u850_all, data[dt]["u200hpa"]/variance_u200_all], center=True)
 
@@ -199,13 +194,13 @@ for h in range(24):
         df.to_csv(f'{pcstxtfile}.txt', index=False, float_format="%.5f")
         all_members_dfs.append(df.head(31)) # The first 31 days of PCs #Updated 10.07.2023
         #******  Dwar graphs  ******#
-        if True:
+        if True: #True
           drawPc(f'{pcstxtfile}.txt', psc_png_file) # The last two argument are 1 by ddefault
         else:
           drawPc_OLD(f'{pcstxtfile}.txt', psc_png_file) #The last two argument are 1 by ddefault
+
         # #****************************#
         #print("--- %s seconds totally ---" % (time_p.time() - start_time))
-f.close() 
 
 conf_date = config["year"] + config["month"] + config["day"] + str(hour) 
 pcs_txt_file_all_memb = config["dirout"] + "/mjo-rmm_all_members"
