@@ -73,15 +73,11 @@ function check_if_files_exist() {
 #======================================
 function shift_input_dates() {
     echo "*********** Shift input dates ***********"
-    input_date_start=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 2 day")
-    input_date_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 88 day")
-    previous_date_start=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 118 day")
-    previous_date_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 1 day")
+    previous_date_start=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC - 116 day")
+    previous_date_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 2 day")
     slave_ensm_date_start=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 3 day")
-    slave_ensm_date_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 98 day")
+    slave_ensm_date_end=$(date '+%Y%m%d %T' --date="$year$month$day 00:00:00 UTC + 98 day") #???
 
-    date_start=${input_date_start:0:4}"-"${input_date_start:4:2}"-"${input_date_start:6:2}
-    date_end=${input_date_end:0:4}"-"${input_date_end:4:2}"-"${input_date_end:6:2}
     prev_date_start=${previous_date_start:0:4}"-"${previous_date_start:4:2}"-"${previous_date_start:6:2}
     prev_date_end=${previous_date_end:0:4}"-"${previous_date_end:4:2}"-"${previous_date_end:6:2}
     date_start_new=${slave_ensm_date_start:0:4}"-"${slave_ensm_date_start:4:2}"-"${slave_ensm_date_start:6:2}
@@ -90,8 +86,6 @@ function shift_input_dates() {
     year_shift=$(($year-1991))year
     start_hour="00:00:00"
 
-    echo "date_start           "$date_start
-    echo "date_end             "$date_end
     echo "prev_date_start      "$prev_date_start
     echo "prev_date_end        "$prev_date_end
     echo "date_start_new       "$date_start_new
@@ -108,7 +102,7 @@ function find_era5_climatology() {
         local era5_pattern_file=${fn_era5_pattern//"<var>"/$var}
         era5_pattern_timemean=${output_dir_era5}/${era5_pattern_file//$nc/""$suffix_timemean}
         era5_pattern_clim_file=${output_dir_era5}/${era5_pattern_file//$nc/""$suffix_timemean_lpf}
-
+        echo ${input_dir_era5}/${var}/$era5_pattern_file
     # Long term mean
         cdo timmean   -del29feb -seldate,1979-01-01,2001-12-31  ${input_dir_era5}/${var}/$era5_pattern_file  $era5_pattern_timemean
         cdo sub       -del29feb -seldate,1979-01-01,2015-12-31  ${input_dir_era5}/${var}/$era5_pattern_file  $era5_pattern_timemean  $fntmp_sub_timemean
@@ -118,6 +112,34 @@ function find_era5_climatology() {
         cdo setmisstoc,0  $fntmp_clim  $fntmp_clim_fill
     # Smooth 
         cdo lowpass,3 -del29feb  $fntmp_clim_fill  $era5_pattern_clim_file
+
+#======== TODO separate function 
+        cdo timmean   -del29feb -seldate,1979-01-01,2001-12-31  ${input_dir_era5}/${var}/$era5_pattern_file  $era5_pattern_timemean
+        cdo sub -del29feb -seldate,1979-01-01,2001-12-31 ${input_dir_era5}/${var}/$era5_pattern_file $era5_pattern_timemean $norm_fac_tm
+        cdo sub -del29feb -seldate,1979-01-01,2001-12-31 $norm_fac_tm $fntmp_clim $norm_fac_anom
+        cdo setmisstoc,0  $norm_fac_anom  $norm_fac_anom_misc
+        cdo runmean,120  -seldate,1979-01-01,2001-12-31 $norm_fac_anom_misc       $norm_fac_runm
+        cdo sub -del29feb -seldate,1979-01-01,2001-12-31  $norm_fac_anom_misc $norm_fac_runm $norm_fac_sub_runm
+        cdo -sellonlatbox,0.0,357.5,-15.0,15.0   $norm_fac_sub_runm         $norm_fac_selbox    
+        cdo mermean  $norm_fac_selbox        $norm_fac_merm     
+        echo "norm_fac_merm: " $norm_fac_merm  
+        
+        cdo -b F64 timvar $norm_fac_merm      $norm_fac_tm 
+        echo "norm_fac_tm: " $norm_fac_tm
+        
+        cdo zonmean $norm_fac_tm         $norm_fac_zonmean   
+        echo "norm_fac_zonmean: " $norm_fac_zonmean  
+        exit
+
+        # cdo zonmean $norm_fac_merm         $norm_fac_zonmean   
+        # echo "norm_fac_zonmean: " $norm_fac_zonmean  
+
+        # cdo timmean $norm_fac_zonmean      $norm_fac_tm 
+        # echo "norm_fac_tm: " $norm_fac_tm
+        exit  
+#========
+
+
     done
     echo "**********************"
 }
@@ -188,9 +210,6 @@ function subtract_slav_climatology() {
     local slav_ensmean_pattern=${slav_ensmean_d_m//"<var>"/$pattern}
     local slav_pattern_clim_file=${output_dir_slav}/${slav_ensmean_pattern//$nc/""$suffix_timemean_lpf}
 
-    echo "in: " $2
-    echo "slav_pattern_clim_file: " $slav_pattern_clim_file
-
     cdo ydaysub -del29feb  $2  $slav_pattern_clim_file  $3 
 }
 
@@ -200,7 +219,6 @@ function subtract_era5_climatology() {
     local pattern=$1
     local data_subract_from=$2
     local out_file=$3    
-
     local era5_pattern_clim=${fn_era5_pattern//"<var>"/$pattern}
     local era5_pattern_timmean=${output_dir_era5}/${era5_pattern_clim//$nc/""$suffix_timemean}
     local era5_pattern_clim_file=${output_dir_era5}/${era5_pattern_clim//$nc/""$suffix_timemean_lpf}
@@ -214,7 +232,7 @@ function runmean() {
     local in_file=$1
     local out_file=$2    
     cdo runmean,120  $in_file  $fntmp_merged_sub_tmclim_runm
-    cdo sub -seldate,$date_start,$date_end  $in_file  $fntmp_merged_sub_tmclim_runm  $out_file
+    cdo sub -seldate,$date_start_new,$date_end_new  $in_file  $fntmp_merged_sub_tmclim_runm  $out_file
 }
 
 #======================================
@@ -233,10 +251,10 @@ function process_slav_variables() {
         file_name_out=$output_dir_slav/erfclim-$var-$year$month$day$hour-$member.nc
         local slav_member_pattern=${1//"<var>"/$var}
 
-        remap_slav_member_pattern $var $slav_member_pattern $fntmp_var_dates 
+        remap_slav_member_pattern $var $slav_member_pattern $fntmp_var_dates
         subtract_slav_climatology $var $fntmp_var_dates $fntmp_sub_slav_clim # subtract_era5_climatology $var $fntmp_var_dates $fntmp_sub_era5_clim
         process_previous_era_pattern $var $fntmp_era5_prev_dates
-        subtract_era5_climatology  $var $fntmp_era5_prev_dates $fntmp_prev_sub_era5_clim      
+        subtract_era5_climatology  $var $fntmp_era5_prev_dates $fntmp_prev_sub_era5_clim    
         merge_with_previous_era5_data $fntmp_prev_sub_era5_clim $fntmp_sub_slav_clim $fntmp_merged_ax 
         runmean $fntmp_merged_ax $fntmp_sub_ftcl_sub_runm
         find_average_field $fntmp_sub_ftcl_sub_runm $fntmp_mapped
@@ -270,31 +288,15 @@ function process_era5_reference() {
         echo " ****** Process_era_variable: $var "
         era5_pattern_file=${fn_era5_pattern//"<var>"/$var}
 
-#TODO choose correct version rename find_average_field
-
-        ## cdo -settaxis,$date_start,12:00:00,1day -seldate,$date_start,$date_end  ${input_dir_era5}/${var}/$era5_pattern_file  $fntmp_var_dates
-        # cdo -settaxis,$date_start_new,12:00:00,1day -seldate,$date_start_new,$date_end_new  ${input_dir_era5}/${var}/$era5_pattern_file  $fntmp_var_dates
-        # subtract_era5_climatology $var $fntmp_var_dates $fntmp_sub_era5_clim
-        # process_previous_era_pattern $var $fntmp_era5_prev_dates
-        # subtract_era5_climatology  $var $fntmp_era5_prev_dates $fntmp_prev_sub_era5_clim      
-        # merge_with_previous_era5_data $fntmp_prev_sub_era5_clim $fntmp_sub_era5_clim $fntmp_merged_ax
-
-        # cdo -seldate,$prev_date_start,$date_end_new  ${input_dir_era5}/${var}/$era5_pattern_file  $fntmp_var_dates
-        cdo -seldate,$prev_date_start,$date_end  ${input_dir_era5}/${var}/$era5_pattern_file  $fntmp_var_dates
-        echo "fntmp_var_dates: " $fntmp_var_dates
+        cdo -seldate,$prev_date_start,$date_end_new  ${input_dir_era5}/${var}/$era5_pattern_file  $fntmp_var_dates 
         subtract_era5_climatology $var $fntmp_var_dates $fntmp_sub_era5_clim
-        echo "fntmp_sub_era5_clim: " $fntmp_sub_era5_clim
         runmean $fntmp_sub_era5_clim $fntmp_sub_ftcl_sub_runm
-        echo "fntmp_sub_ftcl_sub_runm: " $fntmp_sub_ftcl_sub_runm
         find_average_field $fntmp_sub_ftcl_sub_runm $fntmp_mapped
         find_mermean_field $fntmp_mapped $file_name_out
-        echo "file_name_out: " $file_name_out
     done
     echo "----------------------"
 }
 
-#======================================
-#======================================
 #======================================
 function delete_tmp_files() {
     for fn in $fntmp_list; do
@@ -333,14 +335,15 @@ generate_tmp_nc_names fntmp_sub_era5_clim fntmp_prev_sub_era5_clim fntmp_slv_del
 generate_tmp_nc_names fntmp_sub_timemean fntmp_clim fntmp_clim_fill
 generate_tmp_nc_names fntmp_ens_memb_remap fntmp_remap_shift fntmp_era5_prev_dates fntmp_var_dates
 generate_tmp_nc_names fntmp_merged fntmp_merged_ax fntmp_merged_sub_tm fntmp_merged_sub_tmclim_runm fntmp_sub_ftcl_sub_runm fntmp_mapped #ncep
+generate_tmp_nc_names norm_fac_syb_tm norm_fac_anom norm_fac_runm norm_fac_anom_misc norm_fac_sub_runm norm_fac_selbox norm_fac_merm norm_fac_zonmean norm_fac_tm
 
 find_era5_climatology
-find_slav_climatology
+# find_slav_climatology
 
 let processed_members=0
-process_slav_members
+# process_slav_members
 process_era5_reference
-
+exit
 delete_tmp_files
 
 # cd pydraw_rmm
@@ -348,11 +351,9 @@ delete_tmp_files
 # cd ..
 
 
-
-
-#### Global?
-# TODO delete some tmp from global scope
-#
-#
+#### TODO
+#  Delete some tmp from global scope
+#  Change function names find_average_field
+#  Add check on file existing
 ###
 

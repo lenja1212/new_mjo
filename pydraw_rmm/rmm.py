@@ -1,9 +1,6 @@
 ## !/RHM-Lustre3.2/users/wg-slmod/rfadeev/miniconda_rmm/draw_rmm_env/bin/python
 #!/usr/bin/python3
 
-
-
-
 import numpy as np
 import pandas as pd
 import time as time_p
@@ -20,14 +17,24 @@ from nc_fig_paths import *
 from eofs.multivariate.standard import MultivariateEof
 from eofs.standard import Eof
 
-# start_time = time_p.time() # process time 
-# normalization factors from WMO letter 
+# Start_time = time_p.time() # process time 
+# Normalization factors from WMO letter 
 variance_olr  =  15.1
 variance_u200 =  4.81 
 variance_u850 =  1.81
 variance_olr_all =  15.1 
 variance_u200_all = 4.81 
 variance_u850_all = 1.81
+
+# 1230
+# variance_olr_slav  =  2.935
+# variance_u850_slav =  0.69 
+# variance_u200_slav =  2.25
+
+# All
+variance_olr_slav  = 3.37
+variance_u850_slav = 0.76
+variance_u200_slav = 2.53
 
 
 #==================================
@@ -132,9 +139,6 @@ for h in range(24):
             # else:
               # dv = ""
 
-            # ncfile[dt][var] = config[dt]["dir"] + "/" + dv + "/" + str(s) #Good for script
-            # ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/slav" + "/" + dv + "/" + str(s) # GOOD script and py old plav
-            # ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/calculated_data/slav" + "/" + dv + "/" + str(s) # GOOD script and py
             ncfile[dt][var] = "/home/leonid/Desktop/MSU/mj0-rmm/calculated_data/" + dt + "/" + str(s) # GOOD script and py
 
             if (os.path.isfile(ncfile[dt][var])):  
@@ -165,16 +169,6 @@ for h in range(24):
         pcstxtfile = pc_name
         psc_png_file = pc_name
 
-        #****** Calculate normalization factor  *******#
-        # variance_olr = np.std(df_sst_olr)
-        # variance_u200 = np.std(df_sst_u200)
-        # variance_u850 = np.std(df_sst_u850)
-        # # #facotrs std for all
-        # variance_olr_all = np.std(df_olr_all)
-        # variance_u200_all = np.std(df_u200_all)
-        # variance_u850_all = np.std(df_u850_all)
-        #********************************************#
-
         dt = "era5"
         solver = MultivariateEof([data[dt]["olr"]/variance_olr_all, data[dt]["u850hpa"]/variance_u850_all, data[dt]["u200hpa"]/variance_u200_all], center=True)
 
@@ -183,7 +177,10 @@ for h in range(24):
         ######################################################
         #******  Find PC  ******#  -1 if initial olr data are negative; 1 if olr data are positive
         dt = "slav"
-        pseudo_pcs = np.squeeze(solver.projectField([-1*data[dt]["olr"]/variance_olr, data[dt]["u850hpa"]/variance_u850, data[dt]["u200hpa"]/variance_u200], eofscaling=1, neofs=2, weighted=False)) # same as neofs=2
+        if int(member) == 99:
+          pseudo_pcs = np.squeeze(solver.projectField([-1*data[dt]["olr"]/variance_olr, data[dt]["u850hpa"]/variance_u850, data[dt]["u200hpa"]/variance_u200], eofscaling=1, neofs=2, weighted=False)) # same as neofs=2
+        else:
+          pseudo_pcs = np.squeeze(solver.projectField([-1*data[dt]["olr"]/variance_olr_slav, data[dt]["u850hpa"]/variance_u850_slav, data[dt]["u200hpa"]/variance_u200_slav], eofscaling=1, neofs=2, weighted=False)) # same as neofs=2
 
         psc1, psc2 = [], []
         for pc in pseudo_pcs:
@@ -200,7 +197,7 @@ for h in range(24):
           drawPc_OLD(f'{pcstxtfile}.txt', psc_png_file) #The last two argument are 1 by ddefault
 
         # #****************************#
-        #print("--- %s seconds totally ---" % (time_p.time() - start_time))
+        # print("--- %s seconds totally ---" % (time_p.time() - start_time))
 
 conf_date = config["year"] + config["month"] + config["day"] + str(hour) 
 pcs_txt_file_all_memb = config["dirout"] + "/mjo-rmm_all_members"
