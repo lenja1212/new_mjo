@@ -334,10 +334,10 @@ generate_tmp_nc_names fntmp_merged fntmp_merged_ax fntmp_merged_sub_tm fntmp_mer
 generate_tmp_nc_names norm_fac_syb_tm norm_fac_anom norm_fac_runm norm_fac_anom_misc norm_fac_sub_runm norm_fac_selbox norm_fac_merm norm_fac_zonmean norm_fac_tm
 
 find_era5_climatology
-# find_slav_climatology
+find_slav_climatology
 
 let processed_members=0
-# process_slav_members
+process_slav_members
 process_era5_reference
 exit
 delete_tmp_files
@@ -352,5 +352,7 @@ delete_tmp_files
 #  Change function names find_average_field
 #  Add check on file existing
 #  Norm factor function
+#  Сделать первое число старотовым, чтобы все начиналось с одной точки. 
+#  Проверить все даты еще раз!!!
 ###
 
