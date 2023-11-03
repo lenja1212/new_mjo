@@ -129,14 +129,10 @@ function find_era5_climatology() {
         
         cdo zonmean $norm_fac_tm         $norm_fac_zonmean   
         echo "norm_fac_zonmean: " $norm_fac_zonmean  
-        exit
 
-        # cdo zonmean $norm_fac_merm         $norm_fac_zonmean   
-        # echo "norm_fac_zonmean: " $norm_fac_zonmean  
-
-        # cdo timmean $norm_fac_zonmean      $norm_fac_tm 
-        # echo "norm_fac_tm: " $norm_fac_tm
-        exit  
+        # TODO
+        # sqrt($norm_fac_zonmean) 
+        # write in a variable?
 #========
 
 
@@ -355,5 +351,6 @@ delete_tmp_files
 #  Delete some tmp from global scope
 #  Change function names find_average_field
 #  Add check on file existing
+#  Norm factor function
 ###
 
